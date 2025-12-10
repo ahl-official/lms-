@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - AHL Training Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>AHL Training</h2>
+            <ul class="nav-menu">
+                <li><a href="dashboard.html" class="active">Dashboard</a></li>
+                <li><a href="courses.html">My Courses</a></li>
+                <li><a href="activities.html">Activities</a></li>
+                <li><a href="#" class="logout-btn">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <main class="main-content">
+            <header class="header">
+                <h1>Student Dashboard</h1>
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <button class="logout-btn">Logout</button>
+                </div>
+            </header>
+            
+            <!-- Welcome Section -->
+            <div class="card">
+                <h2 id="welcomeMessage">Welcome back!</h2>
+                <p id="roleInfo">Loading your training information...</p>
+            </div>
+            
+            <!-- Progress Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalVideos">0</div>
+                    <div class="stat-label">Total Videos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="completedVideos">0</div>
+                    <div class="stat-label">Completed Videos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pendingActivities">0</div>
+                    <div class="stat-label">Pending Activities</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="overallProgress">0%</div>
+                    <div class="stat-label">Overall Progress</div>
+                </div>
+            </div>
+            
+            <!-- Current Course -->
+            <div class="card">
+                <h3>My Training Course</h3>
+                <div id="currentCourse">
+                    <p>Loading course information...</p>
+                </div>
+            </div>
+            
+            <!-- Recent Videos -->
+            <div class="card">
+                <h3>Continue Learning</h3>
+                <div id="recentVideos">
+                    <p>Loading videos...</p>
+                </div>
+            </div>
+            
+            <!-- Pending Activities -->
+            <div class="card">
+                <h3>Pending Activities</h3>
+                <div id="pendingActivitiesList">
+                    <p>Loading activities...</p>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="card">
+                <h3>Recent Activity</h3>
+                <div id="recentActivity">
+                    <p>Loading recent activity...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="../js/main.js"></script>
+    <script>
+        let currentUser = null;
+        let userCourse = null;
+        let courseVideos = [];
+        let userProgress = [];
+        let userSubmissions = [];
+        let courseActivities = [];
+        
+        // Initialize dashboard
+        async function initDashboard() {
+            try {
+                currentUser = await LMSUtils.getCurrentUser();
+                if (!currentUser) {
+                    return;
+                }
+
+                if (currentUser.role !== 'student') {
+                    window.location.href = '/';
+                    return;
+                }
+                
+                document.getElementById('userName').textContent = currentUser.name;
+                document.getElementById('welcomeMessage').textContent = `Welcome back, ${currentUser.name}!`;
+                document.getElementById('roleInfo').textContent = `Training Role: ${currentUser.course_role || 'Not assigned'}`;
+                
+                await loadStudentData();
+                updateDashboard();
+            } catch (error) {
+                console.error('Dashboard initialization failed:', error);
+                window.location.href = '/';
+            }
+        }
+        
+        // Load student data
+        async function loadStudentData() {
+            try {
+                // Get all courses to find user's course
+                const allCourses = await LMSUtils.apiCall('/courses');
+                userCourse = allCourses.find(course => course.role_name === currentUser.course_role);
+                
+                if (userCourse) {
+                    // Get videos for the course
+                    courseVideos = await LMSUtils.apiCall(`/courses/${userCourse.id}/videos`);
+                     
+                     // Get user's progress
+                     userProgress = await LMSUtils.apiCall(`/progress/${currentUser.id}`);
+                    
+                    // Get user's submissions
+                    userSubmissions = await LMSUtils.apiCall(`/submissions/student/${currentUser.id}`);
+                    
+                    // Get activities for the course
+                    courseActivities = await LMSUtils.apiCall(`/activities?course_id=${userCourse.id}`);
+                }
+            } catch (error) {
+                console.error('Failed to load student data:', error);
+                LMSUtils.showNotification('Failed to load course data', 'error');
+            }
+        }
+        
+        // Update dashboard with data
+        function updateDashboard() {
+            updateStatistics();
+            renderCurrentCourse();
+            renderRecentVideos();
+            renderPendingActivities();
+            renderRecentActivity();
+        }
+        
+        // Update statistics
+        function updateStatistics() {
+            const totalVideos = courseVideos.length;
+            const completedVideos = userProgress.filter(p => p.completed).length;
+            const pendingActivitiesCount = userSubmissions.filter(s => s.status === 'pending').length;
+            const overallProgressPercent = totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0;
+            
+            document.getElementById('totalVideos').textContent = totalVideos;
+            document.getElementById('completedVideos').textContent = completedVideos;
+            document.getElementById('pendingActivities').textContent = pendingActivitiesCount;
+            document.getElementById('overallProgress').textContent = `${overallProgressPercent}%`;
+        }
+        
+        // Render current course
+        function renderCurrentCourse() {
+            const container = document.getElementById('currentCourse');
+            
+            if (!userCourse) {
+                container.innerHTML = `
+                    <div class="alert alert-warning">
+                        <p><strong>No course assigned yet.</strong></p>
+                        <p>Please contact your administrator to get assigned to a training course.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const totalVideos = courseVideos.length;
+            const completedVideos = userProgress.filter(p => p.completed).length;
+            const progressPercent = totalVideos > 0 ? (completedVideos / totalVideos) * 100 : 0;
+            
+            container.innerHTML = `
+                <div class="course-info">
+                    <h4>${userCourse.title}</h4>
+                    <p><strong>Role:</strong> ${userCourse.role_name}</p>
+                    <p><strong>Progress:</strong> ${completedVideos}/${totalVideos} videos completed</p>
+                    
+                    <div class="progress-bar" style="background: #e0e0e0; border-radius: 10px; height: 20px; margin: 1rem 0;">
+                        <div class="progress-fill" style="background: #4CAF50; height: 100%; border-radius: 10px; width: ${progressPercent}%; transition: width 0.3s ease;"></div>
+                    </div>
+                    
+                    <div class="flex gap-1 mt-1">
+                        <a href="courses.html" class="btn btn-primary">Continue Learning</a>
+                        <a href="activities.html" class="btn btn-secondary">View Activities</a>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Render recent videos
+        function renderRecentVideos() {
+            const container = document.getElementById('recentVideos');
+            
+            if (courseVideos.length === 0) {
+                container.innerHTML = '<p>No videos available yet.</p>';
+                return;
+            }
+            
+            // Get next videos to watch (incomplete ones)
+            const incompleteVideos = courseVideos.filter(video => {
+                const progress = userProgress.find(p => p.video_id === video.id);
+                return !progress || !progress.completed;
+            }).slice(0, 3);
+            
+            if (incompleteVideos.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-success">
+                        <p><strong>Congratulations!</strong> You've completed all videos in your course.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const videosHTML = incompleteVideos.map(video => {
+                const progress = userProgress.find(p => p.video_id === video.id);
+                const watchTime = progress ? progress.watch_time : 0;
+                const videoActivities = courseActivities.filter(a => a.video_id === video.id);
+                
+                let activitiesHTML = '';
+                if (videoActivities.length > 0) {
+                    activitiesHTML = `
+                        <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #dee2e6;">
+                            <h6 style="margin: 0 0 0.25rem 0; color: #495057; font-size: 0.85rem;">Activities:</h6>
+                            ${videoActivities.map(activity => `
+                                <div style="margin-bottom: 0.25rem;">
+                                    <strong style="font-size: 0.8rem; color: #007bff;">${activity.title}</strong>
+                                    ${activity.description ? `<p style="margin: 0; font-size: 0.75rem; color: #6c757d;">${activity.description}</p>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+                
+                return `
+                    <div class="video-card" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <h5 style="margin: 0 0 0.5rem 0;">${video.sequence}. ${video.title}</h5>
+                            <p style="margin: 0; color: #666; font-size: 0.9rem;">
+                                ${watchTime > 0 ? `Watch time: ${Math.round(watchTime)}s` : 'Not started'}
+                            </p>
+                            ${activitiesHTML}
+                        </div>
+                        <div class="flex gap-1" style="margin-left: 1rem;">
+                            <a href="courses.html?video=${video.id}" class="btn btn-primary" style="padding: 0.5rem 1rem;">
+                                ${watchTime > 0 ? 'Continue' : 'Start'}
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = videosHTML;
+        }
+        
+        // Render pending activities
+        function renderPendingActivities() {
+            const container = document.getElementById('pendingActivitiesList');
+            
+            const pendingSubmissions = userSubmissions.filter(s => s.status === 'pending').slice(0, 3);
+            
+            if (pendingSubmissions.length === 0) {
+                container.innerHTML = '<p>No pending activities.</p>';
+                return;
+            }
+            
+            const activitiesHTML = pendingSubmissions.map(submission => `
+                <div class="activity-card" style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <div class="flex justify-between align-center">
+                        <div>
+                            <h5 style="margin: 0 0 0.5rem 0;">${submission.activity_title || 'Activity'}</h5>
+                            <p style="margin: 0; color: #666; font-size: 0.9rem;">
+                                Submitted: ${LMSUtils.formatDate(submission.submitted_at)} | Status: <span class="status-badge status-pending">Pending Review</span>
+                            </p>
+                        </div>
+                        <div>
+                            <a href="activities.html?submission=${submission.id}" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = activitiesHTML;
+        }
+        
+        // Render recent activity
+        function renderRecentActivity() {
+            const container = document.getElementById('recentActivity');
+            
+            // Combine progress and submissions for recent activity
+            const recentItems = [];
+            
+            // Add recent video completions
+            userProgress.filter(p => p.completed).forEach(progress => {
+                const video = courseVideos.find(v => v.id === progress.video_id);
+                if (video) {
+                    recentItems.push({
+                        type: 'video_completed',
+                        title: `Completed: ${video.title}`,
+                        date: progress.updated_at,
+                        icon: '✅'
+                    });
+                }
+            });
+            
+            // Add recent submissions
+            userSubmissions.slice(0, 3).forEach(submission => {
+                recentItems.push({
+                    type: 'activity_submitted',
+                    title: `Submitted: ${submission.activity_title || 'Activity'}`,
+                    date: submission.submitted_at,
+                    icon: submission.status === 'approved' ? '✅' : submission.status === 'rejected' ? '❌' : '⏳',
+                    status: submission.status
+                });
+            });
+            
+            // Sort by date (most recent first)
+            recentItems.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            if (recentItems.length === 0) {
+                container.innerHTML = '<p>No recent activity.</p>';
+                return;
+            }
+            
+            const activityHTML = recentItems.slice(0, 5).map(item => `
+                <div class="activity-item" style="display: flex; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #eee;">
+                    <div class="activity-icon" style="font-size: 1.2rem; margin-right: 1rem;">${item.icon}</div>
+                    <div class="activity-content" style="flex: 1;">
+                        <p style="margin: 0; font-weight: 500;">${item.title}</p>
+                        <small style="color: #666;">${LMSUtils.formatDate(item.date)}</small>
+                        ${item.status ? `<span class="status-badge status-${item.status}" style="margin-left: 0.5rem;">${item.status}</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = activityHTML;
+        }
+        
+        // Initialize dashboard when DOM loads
+        document.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+</body>
+</html>

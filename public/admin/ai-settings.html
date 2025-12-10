@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Settings - AHL Training Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>AHL Training</h2>
+            <ul class="nav-menu">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="students.html">Students</a></li>
+                <li><a href="trainers.html">Trainers</a></li>
+                <li><a href="courses.html">Courses</a></li>
+                <li><a href="roles.html">Roles</a></li>
+                <li><a href="ai-settings.html" class="active">AI Settings</a></li>
+                <li><a href="whatsapp-settings.html">WhatsApp Settings</a></li>
+                <li><a href="#" class="logout-btn">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <main class="main-content">
+            <div class="header">
+                <h1>AI Settings</h1>
+                <div class="user-info">
+                    <span>Welcome, <span id="userName">Admin</span></span>
+                </div>
+            </div>
+            
+            <!-- AI Configuration -->
+            <div class="card">
+                <h3>AI Provider Configuration</h3>
+                <form id="aiSettingsForm">
+                    <!-- Provider Selection -->
+                    <div class="form-group">
+                        <label for="defaultProvider">Default AI Provider:</label>
+                        <select id="defaultProvider" name="default_provider" onchange="toggleProviderSettings()">
+                            <option value="openrouter">OpenRouter</option>
+                            <option value="openai">OpenAI</option>
+                        </select>
+                        <small style="color: #666;">Select the default AI provider for content generation</small>
+                    </div>
+                    
+                    <!-- OpenRouter Configuration -->
+                    <div id="openrouterConfig" class="provider-config">
+                        <h4>OpenRouter Settings</h4>
+                        <div class="form-group">
+                            <label for="openrouterApiKey">OpenRouter API Key:</label>
+                            <div class="flex gap-1">
+                                <input type="password" id="openrouterApiKey" name="openrouter_api_key" placeholder="sk-or-v1-... or other valid format" style="flex: 1;">
+                                <button type="button" class="btn btn-secondary" onclick="toggleApiKeyVisibility('openrouter')">Show</button>
+                            </div>
+                            <small style="color: #666;">Your OpenRouter API key (supports multiple formats: sk-or-v1-, sk-, etc.)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="openrouterModel">Default OpenRouter Model:</label>
+                            <select id="openrouterModel" name="openrouter_model">
+                                <optgroup label="Free Models">
+                                    <option value="deepseek/deepseek-chat-v3.1:free">DeepSeek Chat v3.1 (Free)</option>
+                                    <option value="deepseek/deepseek-chat-v3-0324:free">DeepSeek Chat v3-0324 (Free)</option>
+                                    <option value="deepseek/deepseek-r1-0528:free">DeepSeek R1-0528 (Free)</option>
+                                    <option value="moonshotai/kimi-k2:free">Moonshot Kimi K2 (Free)</option>
+                                    <option value="qwen/qwen3-235b-a22b:free">Qwen3 235B (Free)</option>
+                                    <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B (Free)</option>
+                                    <option value="meta-llama/llama-3.1-8b-instruct:free">Llama 3.1 8B (Free)</option>
+                                    <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash (Free)</option>
+                                    <option value="google/gemini-pro-1.5:free">Gemini Pro 1.5 (Free)</option>
+                                    <option value="tencent/hunyuan-a13b-instruct:free">Hunyuan A13B (Free)</option>
+                                    <option value="openai/gpt-oss-20b:free">GPT OSS 20B (Free)</option>
+                                    <option value="openai/gpt-4o-mini:free">GPT-4o Mini (Free)</option>
+                                    <option value="mistralai/mistral-small-3.2-24b-instruct:free">Mistral Small 3.2 (Free)</option>
+                                    <option value="mistralai/mistral-7b-instruct:free">Mistral 7B (Free)</option>
+                                    <option value="nvidia/llama-3.1-nemotron-ultra-253b-v1:free">Nemotron Ultra 253B (Free)</option>
+                                    <option value="nvidia/nemotron-nano-9b-v2:free">Nemotron Nano 9B (Free)</option>
+                                </optgroup>
+                                <optgroup label="Paid Models">
+                                    <option value="openai/gpt-4o">GPT-4o</option>
+                                    <option value="openai/gpt-4o-2024-11-20">GPT-4o (Latest)</option>
+                                    <option value="openai/chatgpt-4o-latest">ChatGPT-4o (Latest)</option>
+                                    <option value="openai/gpt-4-turbo">GPT-4 Turbo</option>
+                                    <option value="openai/gpt-4">GPT-4</option>
+                                    <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                                    <option value="anthropic/claude-3.5-haiku">Claude 3.5 Haiku</option>
+                                    <option value="anthropic/claude-3-opus">Claude 3 Opus</option>
+                                    <option value="anthropic/claude-3-sonnet">Claude 3 Sonnet</option>
+                                    <option value="google/gemini-pro-1.5">Gemini Pro 1.5</option>
+                                    <option value="google/gemini-pro">Gemini Pro</option>
+                                    <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash</option>
+                                    <option value="meta-llama/llama-3.1-405b-instruct">Llama 3.1 405B</option>
+                                    <option value="meta-llama/llama-3.1-70b-instruct">Llama 3.1 70B</option>
+                                    <option value="meta-llama/llama-3.1-8b-instruct">Llama 3.1 8B</option>
+                                    <option value="mistralai/mistral-large">Mistral Large</option>
+                                    <option value="mistralai/mistral-medium">Mistral Medium</option>
+                                    <option value="deepseek/deepseek-chat">DeepSeek Chat</option>
+                                    <option value="deepseek/deepseek-coder">DeepSeek Coder</option>
+                                    <option value="x-ai/grok-beta">Grok Beta</option>
+                                    <option value="perplexity/llama-3.1-sonar-large-128k-online">Perplexity Sonar Large</option>
+                                    <option value="nvidia/llama-3.1-nemotron-70b-instruct">Nemotron 70B</option>
+                                    <option value="cohere/command-r-plus">Command R+</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="enableOpenRouter" name="enable_openrouter" checked>
+                                Enable OpenRouter Provider
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- OpenAI Configuration -->
+                    <div id="openaiConfig" class="provider-config" style="display: none;">
+                        <h4>OpenAI Settings</h4>
+                        <div class="form-group">
+                            <label for="openaiApiKey">OpenAI API Key:</label>
+                            <div class="flex gap-1">
+                                <input type="password" id="openaiApiKey" name="openai_api_key" placeholder="sk-..." style="flex: 1;">
+                                <button type="button" class="btn btn-secondary" onclick="toggleApiKeyVisibility('openai')">Show</button>
+                            </div>
+                            <small style="color: #666;">Your OpenAI API key for AI features</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="openaiModel">Default OpenAI Model:</label>
+                            <select id="openaiModel" name="openai_model">
+                                <option value="gpt-4">GPT-4</option>
+                                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="enableOpenAI" name="enable_openai" checked>
+                                Enable OpenAI Provider
+                            </label>
+                        </div>
+                    </div>
+                    
+
+                    
+                    <div class="flex gap-1">
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                        <button type="button" class="btn btn-secondary" onclick="testAIConnection()">Test Connection</button>
+                    </div>
+                </form>
+                <div id="aiSettingsStatus" class="mt-1"></div>
+            </div>
+            
+            <!-- AI Usage Statistics -->
+            <div class="card">
+                <h3>AI Usage Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalTranscriptions">0</div>
+                        <div class="stat-label">Total Transcriptions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalGeneratedContent">0</div>
+                        <div class="stat-label">Generated Content</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="pendingReviews">0</div>
+                        <div class="stat-label">Pending Reviews</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="studentQuestions">0</div>
+                        <div class="stat-label">Student Q&A Sessions</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI Content Management -->
+            <div class="card">
+                <h3>AI Content Management</h3>
+                <div class="flex gap-1 mb-2">
+                    <button class="btn btn-info" onclick="viewPendingContent()">View Pending Content</button>
+                    <button class="btn btn-warning" onclick="viewUpdateRequests()">View Update Requests</button>
+                    <button class="btn btn-secondary" onclick="exportAIData()">Export AI Data</button>
+                </div>
+                
+                <div id="aiContentSummary">
+                    <p>Loading AI content summary...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Test Connection Modal -->
+    <div id="testConnectionModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 15% auto; padding: 2rem; width: 90%; max-width: 500px; border-radius: 10px;">
+            <h3>AI Connection Test</h3>
+            <div id="connectionTestResult">
+                <p>Testing connection...</p>
+            </div>
+            <div class="flex gap-1 mt-2">
+                <button class="btn btn-secondary" onclick="hideTestConnectionModal()">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../js/main.js"></script>
+    <script>
+        let currentUser = null;
+        
+        // Initialize page
+        async function initAISettingsPage() {
+            try {
+                currentUser = await LMSUtils.getCurrentUser();
+                
+                if (currentUser.role !== 'admin') {
+                    window.location.href = '/';
+                    return;
+                }
+                
+                document.getElementById('userName').textContent = currentUser.name;
+                
+                await loadAISettings();
+                await loadAIStatistics();
+                await loadAIContentSummary();
+                setupEventListeners();
+            } catch (error) {
+                console.error('AI Settings page initialization failed:', error);
+                window.location.href = '/';
+            }
+        }
+        
+        // Load current AI settings
+        async function loadAISettings() {
+            try {
+                const settings = await LMSUtils.apiCall('/ai/settings');
+                
+                // Load provider settings
+                document.getElementById('defaultProvider').value = settings.default_ai_provider || 'openai';
+                
+                // Load OpenAI settings
+                if (settings.openai_api_key && settings.openai_api_key !== 'null') {
+                    document.getElementById('openaiApiKey').value = settings.openai_api_key;
+                }
+                document.getElementById('openaiModel').value = settings.default_openai_model || 'gpt-4';
+                document.getElementById('enableOpenAI').checked = settings.ai_provider_enabled_openai !== 'false';
+                
+                // Load OpenRouter settings
+                if (settings.openrouter_api_key && settings.openrouter_api_key !== 'null') {
+                    document.getElementById('openrouterApiKey').value = settings.openrouter_api_key;
+                }
+                document.getElementById('openrouterModel').value = settings.default_openrouter_model || 'deepseek/deepseek-chat-v3.1:free';
+                document.getElementById('enableOpenRouter').checked = settings.ai_provider_enabled_openrouter === 'true';
+                
+                // Update UI based on current provider
+                toggleProviderSettings();
+                
+                // Update status message
+                const hasOpenAI = settings.openai_api_key && settings.openai_api_key !== 'null';
+                const hasOpenRouter = settings.openrouter_api_key && settings.openrouter_api_key !== 'null';
+                
+                if (hasOpenAI && hasOpenRouter) {
+                    document.getElementById('aiSettingsStatus').innerHTML = '<p style="color: green;">✓ Both OpenAI and OpenRouter are configured</p>';
+                } else if (hasOpenAI) {
+                    document.getElementById('aiSettingsStatus').innerHTML = '<p style="color: green;">✓ OpenAI is configured</p>';
+                } else if (hasOpenRouter) {
+                    document.getElementById('aiSettingsStatus').innerHTML = '<p style="color: green;">✓ OpenRouter is configured</p>';
+                } else {
+                    document.getElementById('aiSettingsStatus').innerHTML = '<p style="color: orange;">⚠ No AI providers configured</p>';
+                }
+            } catch (error) {
+                console.error('Failed to load AI settings:', error);
+                document.getElementById('aiSettingsStatus').innerHTML = '<p style="color: red;">✗ Failed to load AI settings</p>';
+            }
+        }
+        
+        // Load AI usage statistics
+        async function loadAIStatistics() {
+            try {
+                // Load transcriptions count
+                const transcripts = await LMSUtils.apiCall('/video-transcripts/count');
+                document.getElementById('totalTranscriptions').textContent = transcripts.count || 0;
+                
+                // Load generated content count
+                const generatedContent = await LMSUtils.apiCall('/ai-generated-content/count');
+                document.getElementById('totalGeneratedContent').textContent = generatedContent.count || 0;
+                
+                // Load pending reviews count
+                const pendingContent = await LMSUtils.apiCall('/ai-content/pending');
+                document.getElementById('pendingReviews').textContent = pendingContent.length || 0;
+                
+                // Load student Q&A sessions count
+                const qaSessions = await LMSUtils.apiCall('/student-qa-sessions/count');
+                document.getElementById('studentQuestions').textContent = qaSessions.count || 0;
+            } catch (error) {
+                console.error('Failed to load AI statistics:', error);
+                // Set default values on error
+                document.getElementById('totalTranscriptions').textContent = '0';
+                document.getElementById('totalGeneratedContent').textContent = '0';
+                document.getElementById('pendingReviews').textContent = '0';
+                document.getElementById('studentQuestions').textContent = '0';
+            }
+        }
+        
+        // Load AI content summary
+        async function loadAIContentSummary() {
+            try {
+                const pendingContent = await LMSUtils.apiCall('/ai-content/pending');
+                
+                if (pendingContent.length === 0) {
+                    document.getElementById('aiContentSummary').innerHTML = '<p>No pending AI content for review.</p>';
+                } else {
+                    const summary = pendingContent.reduce((acc, item) => {
+                        acc[item.content_type] = (acc[item.content_type] || 0) + 1;
+                        return acc;
+                    }, {});
+                    
+                    const summaryHTML = Object.entries(summary)
+                        .map(([type, count]) => `<span class="badge">${count} ${type}${count > 1 ? 's' : ''}</span>`)
+                        .join(' ');
+                    
+                    document.getElementById('aiContentSummary').innerHTML = `
+                        <p><strong>Pending for review:</strong> ${summaryHTML}</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Failed to load AI content summary:', error);
+                document.getElementById('aiContentSummary').innerHTML = '<p style="color: red;">Failed to load content summary.</p>';
+            }
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('aiSettingsForm').addEventListener('submit', saveAISettings);
+        }
+        
+        // Save AI settings
+        async function saveAISettings(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const settings = {
+                default_ai_provider: formData.get('default_provider'),
+                openai_api_key: formData.get('openai_api_key'),
+                default_openai_model: formData.get('openai_model'),
+                ai_provider_enabled_openai: formData.get('enable_openai') ? 'true' : 'false',
+                openrouter_api_key: formData.get('openrouter_api_key'),
+                default_openrouter_model: formData.get('openrouter_model'),
+                ai_provider_enabled_openrouter: formData.get('enable_openrouter') ? 'true' : 'false'
+            };
+            
+            // Validate API keys based on the selected default provider
+            if (settings.default_ai_provider === 'openai') {
+                // Only validate OpenAI when it's the selected provider
+                if (!settings.openai_api_key) {
+                    LMSUtils.showNotification('Please enter an OpenAI API key', 'error');
+                    return;
+                }
+                if (!settings.openai_api_key.startsWith('sk-')) {
+                    LMSUtils.showNotification('Please enter a valid OpenAI API key (starts with sk-)', 'error');
+                    return;
+                }
+            } else if (settings.default_ai_provider === 'openrouter') {
+                // Only validate OpenRouter when it's the selected provider
+                if (!settings.openrouter_api_key) {
+                    LMSUtils.showNotification('Please enter an OpenRouter API key', 'error');
+                    return;
+                }
+                if (settings.openrouter_api_key.length < 10) {
+                    LMSUtils.showNotification('Please enter a valid OpenRouter API key', 'error');
+                    return;
+                }
+            }
+            
+            try {
+                await LMSUtils.apiCall('/ai/settings', {
+                    method: 'POST',
+                    body: JSON.stringify(settings)
+                });
+                
+                LMSUtils.showNotification('AI settings saved successfully', 'success');
+                await loadAISettings(); // Reload to show updated status
+            } catch (error) {
+                LMSUtils.showNotification(`Failed to save settings: ${error.message}`, 'error');
+            }
+        }
+        
+        // Toggle provider settings visibility
+        function toggleProviderSettings() {
+            const provider = document.getElementById('defaultProvider').value;
+            const openaiConfig = document.getElementById('openaiConfig');
+            const openrouterConfig = document.getElementById('openrouterConfig');
+            
+            if (provider === 'openai') {
+                openaiConfig.style.display = 'block';
+                openrouterConfig.style.display = 'none';
+            } else {
+                openaiConfig.style.display = 'none';
+                openrouterConfig.style.display = 'block';
+            }
+        }
+        
+        // Toggle API key visibility
+        function toggleApiKeyVisibility(provider) {
+            const input = document.getElementById(provider === 'openrouter' ? 'openrouterApiKey' : 'openaiApiKey');
+            const button = event.target;
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.textContent = 'Hide';
+            } else {
+                input.type = 'password';
+                button.textContent = 'Show';
+            }
+        }
+        
+        // Test AI connection
+        async function testAIConnection() {
+            const provider = document.getElementById('defaultProvider').value;
+            const apiKey = provider === 'openrouter' 
+                ? document.getElementById('openrouterApiKey').value 
+                : document.getElementById('openaiApiKey').value;
+            
+            if (!apiKey) {
+                LMSUtils.showNotification(`Please enter a ${provider === 'openrouter' ? 'OpenRouter' : 'OpenAI'} API key first`, 'error');
+                return;
+            }
+            
+            document.getElementById('testConnectionModal').style.display = 'block';
+            document.getElementById('connectionTestResult').innerHTML = '<p>Testing connection...</p>';
+            
+            try {
+                // Test the connection by trying to get AI settings
+                const response = await fetch('/api/ai/test-connection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        apiKey: apiKey,
+                        provider: provider
+                    })
+                });
+                
+                if (response.ok) {
+                    const providerName = provider === 'openrouter' ? 'OpenRouter' : 'OpenAI';
+                    document.getElementById('connectionTestResult').innerHTML = `<p style="color: green;">✓ Connection successful! ${providerName} API is working.</p>`;
+                } else {
+                    const error = await response.json();
+                    document.getElementById('connectionTestResult').innerHTML = `<p style="color: red;">✗ Connection failed: ${error.error}</p>`;
+                }
+            } catch (error) {
+                document.getElementById('connectionTestResult').innerHTML = `<p style="color: red;">✗ Connection failed: ${error.message}</p>`;
+            }
+        }
+        
+        function hideTestConnectionModal() {
+            document.getElementById('testConnectionModal').style.display = 'none';
+        }
+        
+        // View pending content
+        function viewPendingContent() {
+            window.location.href = 'courses.html';
+            // The courses page will handle opening the AI review modal
+            setTimeout(() => {
+                if (window.viewPendingAIContent) {
+                    window.viewPendingAIContent();
+                }
+            }, 1000);
+        }
+        
+        // View update requests
+        async function viewUpdateRequests() {
+            try {
+                const updateRequests = await LMSUtils.apiCall('/ai-content-updates/pending');
+                
+                if (updateRequests.length === 0) {
+                    LMSUtils.showNotification('No pending update requests', 'info');
+                } else {
+                    LMSUtils.showNotification(`${updateRequests.length} update requests pending`, 'info');
+                    // Could open a modal or redirect to a dedicated page
+                }
+            } catch (error) {
+                LMSUtils.showNotification('Failed to load update requests', 'error');
+            }
+        }
+        
+        // Export AI data
+        async function exportAIData() {
+            try {
+                LMSUtils.showNotification('Preparing AI data export...', 'info');
+                
+                // This would typically generate and download a CSV/JSON file
+                const data = {
+                    transcriptions: await LMSUtils.apiCall('/video-transcripts'),
+            generated_content: await LMSUtils.apiCall('/ai-generated-content'),
+            qa_sessions: await LMSUtils.apiCall('/student-qa-sessions')
+                };
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ai-data-export-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                LMSUtils.showNotification('AI data exported successfully', 'success');
+            } catch (error) {
+                LMSUtils.showNotification('Failed to export AI data', 'error');
+            }
+        }
+        
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
+        });
+        
+        // Initialize page when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initAISettingsPage);
+    </script>
+</body>
+</html>

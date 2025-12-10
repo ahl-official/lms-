@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock Call Practice - LMS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .scenario-selection {
+            margin-bottom: 30px;
+        }
+
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .scenario-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        .scenario-card:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        .scenario-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .scenario-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .scenario-description {
+            font-size: 0.95em;
+            margin-bottom: 15px;
+            opacity: 0.8;
+        }
+
+        .scenario-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+            opacity: 0.7;
+        }
+
+        .call-interface {
+            display: none;
+            text-align: center;
+        }
+
+        .call-status {
+            margin-bottom: 30px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.recording {
+            background: #ff4757;
+        }
+
+        .status-indicator.ready {
+            background: #2ed573;
+        }
+
+        .status-indicator.processing {
+            background: #ffa502;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .timer {
+            font-size: 2em;
+            font-weight: 300;
+            color: #333;
+            margin: 20px 0;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f1f2f6;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #ddd;
+        }
+
+        .btn-danger {
+            background: #ff4757;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ff3742;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .recording-controls {
+            display: none;
+        }
+
+        .waveform {
+            height: 100px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #ddd;
+        }
+
+        .waveform.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+
+        .results-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .score-display {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .score-excellent {
+            background: linear-gradient(135deg, #2ed573 0%, #17c0eb 100%);
+        }
+
+        .score-good {
+            background: linear-gradient(135deg, #ffa502 0%, #ff6348 100%);
+        }
+
+        .score-needs-improvement {
+            background: linear-gradient(135deg, #ff4757 0%, #c44569 100%);
+        }
+
+        .feedback-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .feedback-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .criteria-scores {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .criteria-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .criteria-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .criteria-score {
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #ff4757;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .success-message {
+            background: #2ed573;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .history-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+        }
+
+        .history-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-info {
+            flex: 1;
+        }
+
+        .history-score {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .scenario-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Mock Call Practice</h1>
+            <p>Practice your customer service skills with AI-powered feedback</p>
+        </div>
+
+        <!-- Error/Success Messages -->
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Processing your call...</p>
+        </div>
+
+        <!-- Scenario Selection -->
+        <div id="scenarioSelection" class="scenario-selection">
+            <h2>Choose Your Call Scenario</h2>
+            <div id="scenarioGrid" class="scenario-grid">
+                <!-- Scenarios will be loaded here -->
+            </div>
+            <div class="controls">
+                <button id="startCallBtn" class="btn btn-primary" disabled>Start Call Practice</button>
+            </div>
+        </div>
+
+        <!-- Call Interface -->
+        <div id="callInterface" class="call-interface">
+            <div class="call-status">
+                <span id="statusIndicator" class="status-indicator ready"></span>
+                <span id="statusText">Ready to start recording</span>
+            </div>
+
+            <div id="scenarioInfo" class="feedback-section">
+                <!-- Scenario details will be shown here -->
+            </div>
+
+            <div class="timer" id="timer">00:00</div>
+
+            <div class="waveform" id="waveform">
+                <p>🎤 Audio visualization will appear here during recording</p>
+            </div>
+
+            <div class="controls">
+                <button id="recordBtn" class="btn btn-danger">🔴 Start Recording</button>
+                <button id="stopBtn" class="btn btn-secondary" disabled>⏹️ Stop Recording</button>
+                <button id="playbackBtn" class="btn btn-secondary" disabled>▶️ Play Recording</button>
+                <button id="submitBtn" class="btn btn-primary" disabled>📤 Submit Call</button>
+            </div>
+
+            <div class="controls">
+                <button id="backToScenariosBtn" class="btn btn-secondary">← Back to Scenarios</button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="results-section">
+            <div class="score-display">
+                <div id="scoreCircle" class="score-circle">
+                    <span id="scoreValue">--</span>
+                </div>
+                <h3 id="performanceLevel">Analyzing...</h3>
+            </div>
+
+            <div id="feedbackContent" class="feedback-section">
+                <!-- Detailed feedback will be loaded here -->
+            </div>
+
+            <div class="controls">
+                <button id="newCallBtn" class="btn btn-primary">🔄 Try Another Call</button>
+                <button id="viewHistoryBtn" class="btn btn-secondary">📊 View History</button>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div id="historySection" class="history-section" style="display: none;">
+            <h2>📈 Your Call History</h2>
+            <div id="historyList">
+                <!-- History items will be loaded here -->
+            </div>
+            <div class="controls">
+                <button id="backFromHistoryBtn" class="btn btn-secondary">← Back</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class MockCallInterface {
+            constructor() {
+                this.currentSession = null;
+                this.selectedScenario = null;
+                this.mediaRecorder = null;
+                this.audioChunks = [];
+                this.recordingStartTime = null;
+                this.timerInterval = null;
+                this.recordedBlob = null;
+                
+                this.initializeElements();
+                this.loadScenarios();
+                this.setupEventListeners();
+            }
+
+            initializeElements() {
+                // Get all DOM elements
+                this.elements = {
+                    scenarioSelection: document.getElementById('scenarioSelection'),
+                    callInterface: document.getElementById('callInterface'),
+                    resultsSection: document.getElementById('resultsSection'),
+                    historySection: document.getElementById('historySection'),
+                    loading: document.getElementById('loading'),
+                    errorMessage: document.getElementById('errorMessage'),
+                    successMessage: document.getElementById('successMessage'),
+                    
+                    scenarioGrid: document.getElementById('scenarioGrid'),
+                    startCallBtn: document.getElementById('startCallBtn'),
+                    
+                    statusIndicator: document.getElementById('statusIndicator'),
+                    statusText: document.getElementById('statusText'),
+                    scenarioInfo: document.getElementById('scenarioInfo'),
+                    timer: document.getElementById('timer'),
+                    waveform: document.getElementById('waveform'),
+                    
+                    recordBtn: document.getElementById('recordBtn'),
+                    stopBtn: document.getElementById('stopBtn'),
+                    playbackBtn: document.getElementById('playbackBtn'),
+                    submitBtn: document.getElementById('submitBtn'),
+                    backToScenariosBtn: document.getElementById('backToScenariosBtn'),
+                    
+                    scoreCircle: document.getElementById('scoreCircle'),
+                    scoreValue: document.getElementById('scoreValue'),
+                    performanceLevel: document.getElementById('performanceLevel'),
+                    feedbackContent: document.getElementById('feedbackContent'),
+                    
+                    newCallBtn: document.getElementById('newCallBtn'),
+                    viewHistoryBtn: document.getElementById('viewHistoryBtn'),
+                    historyList: document.getElementById('historyList'),
+                    backFromHistoryBtn: document.getElementById('backFromHistoryBtn')
+                };
+            }
+
+            setupEventListeners() {
+                this.elements.startCallBtn.addEventListener('click', () => this.startCall());
+                this.elements.recordBtn.addEventListener('click', () => this.startRecording());
+                this.elements.stopBtn.addEventListener('click', () => this.stopRecording());
+                this.elements.playbackBtn.addEventListener('click', () => this.playRecording());
+                this.elements.submitBtn.addEventListener('click', () => this.submitCall());
+                this.elements.backToScenariosBtn.addEventListener('click', () => this.showScenarioSelection());
+                this.elements.newCallBtn.addEventListener('click', () => this.showScenarioSelection());
+                this.elements.viewHistoryBtn.addEventListener('click', () => this.showHistory());
+                this.elements.backFromHistoryBtn.addEventListener('click', () => this.showResults());
+            }
+
+            async loadScenarios() {
+                try {
+                    const response = await fetch('/api/mock-call/scenarios');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.renderScenarios(data.scenarios);
+                    } else {
+                        this.showError('Failed to load scenarios');
+                    }
+                } catch (error) {
+                    console.error('Error loading scenarios:', error);
+                    this.showError('Failed to load scenarios');
+                }
+            }
+
+            renderScenarios(scenarios) {
+                this.elements.scenarioGrid.innerHTML = '';
+                
+                scenarios.forEach(scenario => {
+                    const card = document.createElement('div');
+                    card.className = 'scenario-card';
+                    card.dataset.scenarioId = scenario.id;
+                    
+                    card.innerHTML = `
+                        <div class="scenario-title">${scenario.title}</div>
+                        <div class="scenario-description">${scenario.description}</div>
+                        <div class="scenario-meta">
+                            <span>⏱️ ${Math.floor(scenario.duration / 60)} min</span>
+                            <span>📊 ${scenario.difficulty}</span>
+                        </div>
+                    `;
+                    
+                    card.addEventListener('click', () => this.selectScenario(scenario, card));
+                    this.elements.scenarioGrid.appendChild(card);
+                });
+            }
+
+            selectScenario(scenario, cardElement) {
+                // Remove previous selection
+                document.querySelectorAll('.scenario-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                
+                // Select new scenario
+                cardElement.classList.add('selected');
+                this.selectedScenario = scenario;
+                this.elements.startCallBtn.disabled = false;
+            }
+
+            async startCall() {
+                if (!this.selectedScenario) return;
+                
+                try {
+                    this.showLoading('Starting call session...');
+                    
+                    const response = await fetch('/api/mock-call/start', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            scenarioType: this.selectedScenario.id
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.currentSession = data.session;
+                        this.showCallInterface();
+                    } else {
+                        this.showError(data.error || 'Failed to start call session');
+                    }
+                } catch (error) {
+                    console.error('Error starting call:', error);
+                    this.showError('Failed to start call session');
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            showCallInterface() {
+                this.elements.scenarioSelection.style.display = 'none';
+                this.elements.callInterface.style.display = 'block';
+                
+                // Show scenario info
+                this.elements.scenarioInfo.innerHTML = `
+                    <div class="feedback-title">${this.selectedScenario.title}</div>
+                    <p><strong>Scenario:</strong> ${this.selectedScenario.description}</p>
+                    <p><strong>Duration:</strong> ${Math.floor(this.selectedScenario.duration / 60)} minutes</p>
+                    <p><strong>Difficulty:</strong> ${this.selectedScenario.difficulty}</p>
+                    <div style="margin-top: 15px;">
+                        <strong>Evaluation Criteria:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            ${this.selectedScenario.evaluationCriteria.map(c => `<li>${c}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            async startRecording() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    
+                    this.mediaRecorder = new MediaRecorder(stream);
+                    this.audioChunks = [];
+                    
+                    this.mediaRecorder.ondataavailable = (event) => {
+                        this.audioChunks.push(event.data);
+                    };
+                    
+                    this.mediaRecorder.onstop = () => {
+                        this.recordedBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
+                        this.elements.playbackBtn.disabled = false;
+                        this.elements.submitBtn.disabled = false;
+                    };
+                    
+                    this.mediaRecorder.start();
+                    this.recordingStartTime = Date.now();
+                    
+                    // Update UI
+                    this.elements.statusIndicator.className = 'status-indicator recording';
+                    this.elements.statusText.textContent = 'Recording in progress...';
+                    this.elements.waveform.classList.add('active');
+                    this.elements.waveform.innerHTML = '<p>🔴 Recording... Speak clearly into your microphone</p>';
+                    
+                    this.elements.recordBtn.disabled = true;
+                    this.elements.stopBtn.disabled = false;
+                    
+                    // Start timer
+                    this.startTimer();
+                    
+                } catch (error) {
+                    console.error('Error starting recording:', error);
+                    this.showError('Failed to access microphone. Please check permissions.');
+                }
+            }
+
+            stopRecording() {
+                if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                    this.mediaRecorder.stop();
+                    
+                    // Stop all tracks
+                    this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                    
+                    // Update UI
+                    this.elements.statusIndicator.className = 'status-indicator ready';
+                    this.elements.statusText.textContent = 'Recording completed';
+                    this.elements.waveform.classList.remove('active');
+                    this.elements.waveform.innerHTML = '<p>✅ Recording completed. You can play it back or submit.</p>';
+                    
+                    this.elements.recordBtn.disabled = false;
+                    this.elements.stopBtn.disabled = true;
+                    
+                    // Stop timer
+                    this.stopTimer();
+                }
+            }
+
+            playRecording() {
+                if (this.recordedBlob) {
+                    const audio = new Audio(URL.createObjectURL(this.recordedBlob));
+                    audio.play();
+                }
+            }
+
+            async submitCall() {
+                if (!this.recordedBlob || !this.currentSession) return;
+                
+                try {
+                    this.showLoading('Submitting your call for analysis...');
+                    
+                    const formData = new FormData();
+                    formData.append('recording', this.recordedBlob, 'call_recording.wav');
+                    
+                    const response = await fetch(`/api/mock-call/complete/${this.currentSession.sessionId}`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showSuccess('Call submitted successfully! Analysis in progress...');
+                        this.waitForAnalysis();
+                    } else {
+                        this.showError(data.error || 'Failed to submit call');
+                    }
+                } catch (error) {
+                    console.error('Error submitting call:', error);
+                    this.showError('Failed to submit call');
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            async waitForAnalysis() {
+                const checkInterval = setInterval(async () => {
+                    try {
+                        const response = await fetch(`/api/mock-call/session/${this.currentSession.sessionId}/status`);
+                        const data = await response.json();
+                        
+                        if (data.success && data.status.analysisCompleted) {
+                            clearInterval(checkInterval);
+                            this.loadResults();
+                        }
+                    } catch (error) {
+                        console.error('Error checking analysis status:', error);
+                    }
+                }, 3000); // Check every 3 seconds
+                
+                // Timeout after 2 minutes
+                setTimeout(() => {
+                    clearInterval(checkInterval);
+                    this.loadResults(); // Load whatever results are available
+                }, 120000);
+            }
+
+            async loadResults() {
+                try {
+                    const response = await fetch(`/api/mock-call/results/${this.currentSession.sessionId}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showResults(data.results);
+                    } else {
+                        this.showError('Failed to load results');
+                    }
+                } catch (error) {
+                    console.error('Error loading results:', error);
+                    this.showError('Failed to load results');
+                }
+            }
+
+            showResults(results) {
+                this.elements.callInterface.style.display = 'none';
+                this.elements.resultsSection.style.display = 'block';
+                
+                const score = Math.round(results.session.overall_score || 0);
+                this.elements.scoreValue.textContent = score;
+                
+                // Set score circle color
+                this.elements.scoreCircle.className = 'score-circle ';
+                if (score >= 85) {
+                    this.elements.scoreCircle.classList.add('score-excellent');
+                    this.elements.performanceLevel.textContent = 'Excellent Performance!';
+                } else if (score >= 70) {
+                    this.elements.scoreCircle.classList.add('score-good');
+                    this.elements.performanceLevel.textContent = 'Good Performance';
+                } else {
+                    this.elements.scoreCircle.classList.add('score-needs-improvement');
+                    this.elements.performanceLevel.textContent = 'Needs Improvement';
+                }
+                
+                // Show detailed feedback
+                this.renderFeedback(results);
+            }
+
+            renderFeedback(results) {
+                let feedbackHTML = '';
+                
+                if (results.analysis.overall) {
+                    const feedback = results.analysis.overall.data;
+                    
+                    feedbackHTML += `
+                        <div class="feedback-title">📋 Overall Feedback</div>
+                        <p>${feedback.specific_feedback}</p>
+                        
+                        <div style="margin-top: 20px;">
+                            <h4>💪 Strengths:</h4>
+                            <ul>
+                                ${feedback.strengths.map(s => `<li>${s}</li>`).join('')}
+                            </ul>
+                        </div>
+                        
+                        <div style="margin-top: 15px;">
+                            <h4>🎯 Areas for Improvement:</h4>
+                            <ul>
+                                ${feedback.areas_for_improvement.map(a => `<li>${a}</li>`).join('')}
+                            </ul>
+                        </div>
+                        
+                        <div style="margin-top: 15px;">
+                            <h4>📈 Next Steps:</h4>
+                            <ul>
+                                ${feedback.next_steps.map(n => `<li>${n}</li>`).join('')}
+                            </ul>
+                        </div>
+                        
+                        <div style="margin-top: 15px; padding: 15px; background: #e8f5e8; border-radius: 10px;">
+                            <strong>💬 Encouragement:</strong> ${feedback.encouragement}
+                        </div>
+                    `;
+                }
+                
+                // Show criteria scores
+                if (results.criteriaScores && results.criteriaScores.length > 0) {
+                    feedbackHTML += `
+                        <div style="margin-top: 30px;">
+                            <div class="feedback-title">📊 Detailed Scores</div>
+                            <div class="criteria-scores">
+                                ${results.criteriaScores.map(c => `
+                                    <div class="criteria-item">
+                                        <div class="criteria-name">${c.criteria_name}</div>
+                                        <div class="criteria-score">${Math.round(c.score)}/100</div>
+                                        <div style="font-size: 0.9em; margin-top: 5px;">${c.feedback}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                this.elements.feedbackContent.innerHTML = feedbackHTML;
+            }
+
+            async showHistory() {
+                try {
+                    const response = await fetch('/api/mock-call/history');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.renderHistory(data.history);
+                        this.elements.resultsSection.style.display = 'none';
+                        this.elements.historySection.style.display = 'block';
+                    } else {
+                        this.showError('Failed to load history');
+                    }
+                } catch (error) {
+                    console.error('Error loading history:', error);
+                    this.showError('Failed to load history');
+                }
+            }
+
+            renderHistory(history) {
+                if (history.length === 0) {
+                    this.elements.historyList.innerHTML = '<p>No call history found. Complete some mock calls to see your progress!</p>';
+                    return;
+                }
+                
+                this.elements.historyList.innerHTML = history.map(item => `
+                    <div class="history-item">
+                        <div class="history-info">
+                            <h4>${item.scenario.title}</h4>
+                            <p>Completed: ${new Date(item.completed_at).toLocaleDateString()}</p>
+                            <p>Duration: ${Math.floor(item.duration / 60)}:${(item.duration % 60).toString().padStart(2, '0')}</p>
+                        </div>
+                        <div class="history-score">
+                            ${item.overall_score ? Math.round(item.overall_score) : '--'}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            startTimer() {
+                this.timerInterval = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - this.recordingStartTime) / 1000);
+                    const minutes = Math.floor(elapsed / 60);
+                    const seconds = elapsed % 60;
+                    this.elements.timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }, 1000);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+            }
+
+            showScenarioSelection() {
+                this.elements.callInterface.style.display = 'none';
+                this.elements.resultsSection.style.display = 'none';
+                this.elements.historySection.style.display = 'none';
+                this.elements.scenarioSelection.style.display = 'block';
+                
+                // Reset state
+                this.currentSession = null;
+                this.selectedScenario = null;
+                this.recordedBlob = null;
+                this.elements.startCallBtn.disabled = true;
+                
+                // Clear selection
+                document.querySelectorAll('.scenario-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+            }
+
+            showResults() {
+                this.elements.historySection.style.display = 'none';
+                this.elements.resultsSection.style.display = 'block';
+            }
+
+            showLoading(message) {
+                this.elements.loading.style.display = 'block';
+                this.elements.loading.querySelector('p').textContent = message;
+            }
+
+            hideLoading() {
+                this.elements.loading.style.display = 'none';
+            }
+
+            showError(message) {
+                this.elements.errorMessage.textContent = message;
+                this.elements.errorMessage.style.display = 'block';
+                setTimeout(() => {
+                    this.elements.errorMessage.style.display = 'none';
+                }, 5000);
+            }
+
+            showSuccess(message) {
+                this.elements.successMessage.textContent = message;
+                this.elements.successMessage.style.display = 'block';
+                setTimeout(() => {
+                    this.elements.successMessage.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Initialize the interface when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new MockCallInterface();
+        });
+    </script>
+</body>
+</html>

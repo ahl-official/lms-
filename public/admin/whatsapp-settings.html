@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Settings - AHL Training Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>AHL Training</h2>
+            <ul class="nav-menu">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="students.html">Students</a></li>
+                <li><a href="trainers.html">Trainers</a></li>
+                <li><a href="courses.html">Courses</a></li>
+                <li><a href="roles.html">Roles</a></li>
+                <li><a href="ai-settings.html">AI Settings</a></li>
+                <li><a href="whatsapp-settings.html" class="active">WhatsApp Settings</a></li>
+                <li><a href="#" class="logout-btn">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <main class="main-content">
+            <div class="header">
+                <h1>WhatsApp Settings</h1>
+                <div class="user-info">
+                    <span>Welcome, <span id="userName">Admin</span></span>
+                </div>
+            </div>
+            
+            <!-- WAHA Configuration -->
+            <div class="card">
+                <h3>WAHA Configuration</h3>
+                <form id="whatsappSettingsForm">
+                    <div class="form-group">
+                        <label for="wahaBaseUrl">WAHA Base URL:</label>
+                        <input type="url" id="wahaBaseUrl" name="base_url" placeholder="https://waha.example.com" required>
+                        <small style="color: #666;">The base URL of your WAHA WhatsApp API service</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="wahaApiKey">WAHA API Key:</label>
+                        <div class="flex gap-1">
+                            <input type="password" id="wahaApiKey" name="api_key" placeholder="Your WAHA API key" style="flex: 1;" required>
+                            <button type="button" class="btn btn-secondary" onclick="toggleApiKeyVisibility()">Show</button>
+                        </div>
+                        <small style="color: #666;">Your WAHA API key for WhatsApp messaging</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="wahaSessionName">Session Name:</label>
+                        <input type="text" id="wahaSessionName" name="session_name" placeholder="session_name" required>
+                        <small style="color: #666;">The WhatsApp session name in WAHA</small>
+                    </div>
+                    <div class="flex gap-1">
+                        <button type="button" class="btn btn-primary" onclick="saveWAHAConfiguration()">Save Configuration</button>
+                        <button type="button" class="btn btn-secondary" onclick="testWAHAConnection()">Test Connection</button>
+                        <button type="button" class="btn btn-info" onclick="checkSessionStatus()">Check Session Status</button>
+                    </div>
+                </form>
+                <div id="whatsappSettingsStatus" class="mt-1"></div>
+            </div>
+            
+            <!-- WhatsApp Notification Testing -->
+            <div class="card">
+                <h3>📱 WhatsApp Notification Testing</h3>
+                <form id="testNotificationForm">
+                    <div class="form-group">
+                        <label for="testPhoneNumber">Phone Number:</label>
+                        <input type="tel" id="testPhoneNumber" name="phone" placeholder="917021247525" required>
+                        <small style="color: #666;">Enter phone number with country code (e.g., 917021247525 for India)</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="testMessage">Test Message:</label>
+                        <textarea id="testMessage" name="message" rows="3" placeholder="Test notification from AHL Training LMS" required></textarea>
+                        <small style="color: #666;">Enter the message you want to send for testing</small>
+                    </div>
+                    <div class="flex gap-1">
+                        <button type="submit" class="btn btn-primary">Send Test Message</button>
+                        <button type="button" class="btn btn-secondary" onclick="loadUserPhones()">Load User Phones</button>
+                    </div>
+                </form>
+                <div id="testNotificationStatus" class="mt-1"></div>
+            </div>
+            
+            <!-- WhatsApp Statistics -->
+            <div class="card">
+                <h3>WhatsApp Usage Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalUsers">0</div>
+                        <div class="stat-label">Users with Phone Numbers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalStudents">0</div>
+                        <div class="stat-label">Students</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalTrainers">0</div>
+                        <div class="stat-label">Trainers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="sessionStatus">Unknown</div>
+                        <div class="stat-label">WAHA Session Status</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Debug Information -->
+            <div class="card">
+                <h3>Debug Information</h3>
+                <div class="flex gap-1 mb-2">
+                    <button class="btn btn-info" onclick="viewUserPhones()">View User Phone Numbers</button>
+                    <button class="btn btn-warning" onclick="testNotificationTriggers()">Test Notification Triggers</button>
+                    <button class="btn btn-secondary" onclick="exportWhatsAppData()">Export Debug Data</button>
+                </div>
+                
+                <div id="debugInfo">
+                    <p>Click buttons above to view debug information...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Test Connection Modal -->
+    <div id="testConnectionModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 15% auto; padding: 2rem; width: 90%; max-width: 500px; border-radius: 10px;">
+            <h3>WAHA Connection Test</h3>
+            <div id="connectionTestResult">
+                <p>Testing connection...</p>
+            </div>
+            <div class="flex gap-1 mt-2">
+                <button class="btn btn-secondary" onclick="hideTestConnectionModal()">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User Phones Modal -->
+    <div id="userPhonesModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 10% auto; padding: 2rem; width: 90%; max-width: 700px; border-radius: 10px; max-height: 70vh; overflow-y: auto;">
+            <h3>User Phone Numbers</h3>
+            <div id="userPhonesContent">
+                <p>Loading user phone numbers...</p>
+            </div>
+            <div class="flex gap-1 mt-2">
+                <button class="btn btn-secondary" onclick="hideUserPhonesModal()">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../js/main.js"></script>
+    <script>
+        let currentUser = null;
+        
+        // Initialize page
+        async function initWhatsAppSettingsPage() {
+            try {
+                currentUser = await LMSUtils.getCurrentUser();
+                
+                if (currentUser.role !== 'admin') {
+                    window.location.href = '/';
+                    return;
+                }
+                
+                document.getElementById('userName').textContent = currentUser.name;
+                
+                await loadWhatsAppSettings();
+                await loadWhatsAppStatistics();
+                setupEventListeners();
+            } catch (error) {
+                console.error('WhatsApp Settings page initialization failed:', error);
+                window.location.href = '/';
+            }
+        }
+        
+        // Load current WhatsApp settings
+        async function loadWhatsAppSettings() {
+            try {
+                await loadWAHAConfigurationFromBackend();
+            } catch (error) {
+                console.error('Failed to load WhatsApp settings:', error);
+                document.getElementById('whatsappSettingsStatus').innerHTML = '<p style="color: red;">✗ Failed to load WhatsApp settings</p>';
+            }
+        }
+        
+        // Load WhatsApp usage statistics
+        async function loadWhatsAppStatistics() {
+            try {
+                // Load users count
+                const users = await LMSUtils.apiCall('/users');
+                const usersWithPhones = users.filter(user => user.phone && user.phone.trim() !== '');
+                document.getElementById('totalUsers').textContent = usersWithPhones.length;
+                
+                // Count students and trainers
+                const students = usersWithPhones.filter(user => user.role === 'student');
+                const trainers = usersWithPhones.filter(user => user.role === 'trainer');
+                document.getElementById('totalStudents').textContent = students.length;
+                document.getElementById('totalTrainers').textContent = trainers.length;
+                
+                // Check session status
+                await checkSessionStatus();
+            } catch (error) {
+                console.error('Failed to load WhatsApp statistics:', error);
+                document.getElementById('totalUsers').textContent = '0';
+                document.getElementById('totalStudents').textContent = '0';
+                document.getElementById('totalTrainers').textContent = '0';
+                document.getElementById('sessionStatus').textContent = 'Error';
+            }
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('testNotificationForm').addEventListener('submit', sendTestMessage);
+        }
+        
+        // Toggle API key visibility
+        function toggleApiKeyVisibility() {
+            const input = document.getElementById('wahaApiKey');
+            const button = event.target;
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.textContent = 'Hide';
+            } else {
+                input.type = 'password';
+                button.textContent = 'Show';
+            }
+        }
+        
+        // Test WAHA connection
+        async function testWAHAConnection() {
+            document.getElementById('testConnectionModal').style.display = 'block';
+            document.getElementById('connectionTestResult').innerHTML = '<p>Testing WAHA connection...</p>';
+            
+            try {
+                const response = await fetch('/api/whatsapp/test', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    document.getElementById('connectionTestResult').innerHTML = `
+                        <p style="color: green;">✓ WAHA connection successful!</p>
+                        <p><strong>Sessions found:</strong> ${result.sessions ? result.sessions.length : 0}</p>
+                        <p><strong>Session Status:</strong> ${result.sessionInfo ? result.sessionInfo.status : 'Unknown'}</p>
+                        <pre style="background: #f5f5f5; padding: 1rem; border-radius: 5px; font-size: 12px; max-height: 200px; overflow-y: auto;">${JSON.stringify(result, null, 2)}</pre>
+                    `;
+                } else {
+                    const errorMessage = result.message || result.error || 'Unknown error';
+                    document.getElementById('connectionTestResult').innerHTML = `
+                        <p style="color: red;">✗ Connection failed: ${errorMessage}</p>
+                        <p><strong>Sessions found:</strong> ${result.sessions ? result.sessions.length : 0}</p>
+                        <pre style="background: #f5f5f5; padding: 1rem; border-radius: 5px; font-size: 12px; max-height: 200px; overflow-y: auto;">${JSON.stringify(result, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('connectionTestResult').innerHTML = `<p style="color: red;">✗ Connection failed: ${error.message}</p>`;
+            }
+        }
+        
+        // Check session status
+        async function checkSessionStatus() {
+            try {
+                const response = await fetch('/api/whatsapp/test');
+                const result = await response.json();
+                
+                // Look for our configured session
+                const sessionName = result.config?.sessionName || 'aman';
+                const session = result.sessions?.find(s => s.name === sessionName);
+                
+                if (session) {
+                    const status = session.status;
+                    const statusElement = document.getElementById('sessionStatus');
+                    statusElement.textContent = status;
+                    
+                    // Color code the status
+                    if (status === 'WORKING') {
+                        statusElement.style.color = 'green';
+                    } else if (status === 'STARTING') {
+                        statusElement.style.color = 'orange';
+                    } else {
+                        statusElement.style.color = 'red';
+                    }
+                    
+                    // Show additional session info
+                    LMSUtils.showNotification(`Session ${sessionName}: ${status}`, status === 'WORKING' ? 'success' : 'warning');
+                } else {
+                    document.getElementById('sessionStatus').textContent = 'Not Found';
+                    document.getElementById('sessionStatus').style.color = 'red';
+                    LMSUtils.showNotification(`Session ${sessionName} not found`, 'error');
+                }
+            } catch (error) {
+                document.getElementById('sessionStatus').textContent = 'Error';
+                document.getElementById('sessionStatus').style.color = 'red';
+                LMSUtils.showNotification(`Error checking session status: ${error.message}`, 'error');
+            }
+        }
+        
+        // Send test message
+        async function sendTestMessage(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const phone = formData.get('phone');
+            const message = formData.get('message');
+            
+            if (!phone || !message) {
+                LMSUtils.showNotification('Please enter both phone number and message', 'error');
+                return;
+            }
+            
+            document.getElementById('testNotificationStatus').innerHTML = '<p style="color: blue;">Sending test message...</p>';
+            
+            try {
+                const response = await LMSUtils.apiCall('/whatsapp/send', {
+                    method: 'POST',
+                    body: JSON.stringify({ phone, message })
+                });
+                
+                LMSUtils.showNotification('Test message sent successfully!', 'success');
+                document.getElementById('testNotificationStatus').innerHTML = '<p style="color: green;">✓ Test message sent successfully!</p>';
+            } catch (error) {
+                LMSUtils.showNotification(`Failed to send test message: ${error.message}`, 'error');
+                document.getElementById('testNotificationStatus').innerHTML = `<p style="color: red;">✗ Failed to send: ${error.message}</p>`;
+            }
+        }
+        
+        // Load user phones into the form
+        async function loadUserPhones() {
+            try {
+                const users = await LMSUtils.apiCall('/users');
+                const usersWithPhones = users.filter(user => user.phone && user.phone.trim() !== '');
+                
+                if (usersWithPhones.length > 0) {
+                    // Use the first user's phone as default
+                    document.getElementById('testPhoneNumber').value = usersWithPhones[0].phone;
+                    LMSUtils.showNotification(`Loaded phone number: ${usersWithPhones[0].phone}`, 'info');
+                } else {
+                    LMSUtils.showNotification('No users with phone numbers found', 'warning');
+                }
+            } catch (error) {
+                LMSUtils.showNotification('Failed to load user phones', 'error');
+            }
+        }
+        
+        // View user phone numbers
+        async function viewUserPhones() {
+            document.getElementById('userPhonesModal').style.display = 'block';
+            document.getElementById('userPhonesContent').innerHTML = '<p>Loading user phone numbers...</p>';
+            
+            try {
+                const users = await LMSUtils.apiCall('/users');
+                const usersWithPhones = users.filter(user => user.phone && user.phone.trim() !== '');
+                
+                if (usersWithPhones.length === 0) {
+                    document.getElementById('userPhonesContent').innerHTML = '<p>No users with phone numbers found.</p>';
+                    return;
+                }
+                
+                const tableHTML = `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f5f5f5;">
+                                <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: left;">Name</th>
+                                <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: left;">Role</th>
+                                <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: left;">Phone</th>
+                                <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${usersWithPhones.map(user => `
+                                <tr>
+                                    <td style="padding: 0.5rem; border: 1px solid #ddd;">${user.name}</td>
+                                    <td style="padding: 0.5rem; border: 1px solid #ddd;">
+                                        <span class="badge ${user.role === 'admin' ? 'badge-danger' : user.role === 'trainer' ? 'badge-warning' : 'badge-info'}">
+                                            ${user.role}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 0.5rem; border: 1px solid #ddd;">${user.phone}</td>
+                                    <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">
+                                        <button class="btn btn-sm btn-primary" onclick="usePhoneNumber('${user.phone}')">Use</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                
+                document.getElementById('userPhonesContent').innerHTML = tableHTML;
+            } catch (error) {
+                document.getElementById('userPhonesContent').innerHTML = '<p style="color: red;">Failed to load user phone numbers.</p>';
+            }
+        }
+        
+        // Use phone number in test form
+        function usePhoneNumber(phone) {
+            document.getElementById('testPhoneNumber').value = phone;
+            hideUserPhonesModal();
+            LMSUtils.showNotification(`Phone number ${phone} loaded for testing`, 'info');
+        }
+        
+        // Test notification triggers
+        async function testNotificationTriggers() {
+            document.getElementById('debugInfo').innerHTML = `
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px; border-left: 4px solid #007bff;">
+                    <h4>Notification Triggers Information</h4>
+                    <p><strong>Trainer Notifications:</strong> Sent when students submit activities</p>
+                    <ul>
+                        <li>Endpoint: <code>POST /api/activities/submit</code></li>
+                        <li>Function: <code>notifyTrainer(userId, videoId)</code></li>
+                        <li>Triggers: Lines 1721, 1913, 1927 in server.js</li>
+                    </ul>
+                    
+                    <p><strong>Student Notifications:</strong> Sent when trainers approve/reject submissions</p>
+                    <ul>
+                        <li>Endpoint: <code>PUT /api/activities/:id/approve</code></li>
+                        <li>Function: <code>notifyStudent(submissionId, status)</code></li>
+                        <li>Triggers: Lines 1748, 1807 in server.js</li>
+                    </ul>
+                    
+                    <p><strong>To test notifications:</strong></p>
+                    <ol>
+                        <li>Ensure WAHA session is in WORKING status</li>
+                        <li>Login as a student and submit an activity</li>
+                        <li>Login as a trainer and approve/reject the submission</li>
+                        <li>Check WhatsApp for received messages</li>
+                    </ol>
+                </div>
+            `;
+        }
+        
+        // Export WhatsApp debug data
+        async function exportWhatsAppData() {
+            try {
+                LMSUtils.showNotification('Preparing WhatsApp debug data export...', 'info');
+                
+                const users = await LMSUtils.apiCall('/users');
+                const wahaTest = await fetch('/api/whatsapp/test').then(r => r.json()).catch(() => ({ error: 'Failed to test WAHA' }));
+                
+                const data = {
+                    timestamp: new Date().toISOString(),
+                    waha_config: {
+                        baseUrl: 'https://waha.amankhan.space',
+                        sessionName: 'aman'
+                    },
+                    users_with_phones: users.filter(user => user.phone && user.phone.trim() !== '').map(user => ({
+                        id: user.id,
+                        name: user.name,
+                        role: user.role,
+                        phone: user.phone
+                    })),
+                    waha_test_result: wahaTest,
+                    notification_endpoints: [
+                        'POST /api/whatsapp/send',
+                        'GET /api/whatsapp/test',
+                        'POST /api/activities/submit (triggers notifyTrainer)',
+                        'PUT /api/activities/:id/approve (triggers notifyStudent)'
+                    ]
+                };
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `whatsapp-debug-export-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                LMSUtils.showNotification('WhatsApp debug data exported successfully', 'success');
+            } catch (error) {
+                LMSUtils.showNotification('Failed to export WhatsApp debug data', 'error');
+            }
+        }
+        
+        // Save WAHA Configuration
+        async function saveWAHAConfiguration() {
+            try {
+                const baseUrl = document.getElementById('wahaBaseUrl').value.trim();
+                const apiKey = document.getElementById('wahaApiKey').value.trim();
+                const sessionName = document.getElementById('wahaSessionName').value.trim();
+                
+                if (!baseUrl || !apiKey || !sessionName) {
+                    LMSUtils.showNotification('Please fill in all WAHA configuration fields', 'error');
+                    return;
+                }
+                
+                const configData = {
+                    baseUrl: baseUrl,
+                    apiKey: apiKey,
+                    sessionName: sessionName
+                };
+                
+                LMSUtils.showNotification('Saving WAHA configuration...', 'info');
+                
+                const result = await LMSUtils.apiCall('/whatsapp/config', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(configData)
+                });
+                
+                if (result.success) {
+                    LMSUtils.showNotification('WAHA configuration saved successfully', 'success');
+                    document.getElementById('whatsappSettingsStatus').innerHTML = '<p style="color: green;">✓ WAHA configuration saved and updated</p>';
+                } else {
+                    throw new Error(result.message || 'Failed to save configuration');
+                }
+            } catch (error) {
+                console.error('Failed to save WAHA configuration:', error);
+                LMSUtils.showNotification('Failed to save WAHA configuration: ' + error.message, 'error');
+                document.getElementById('whatsappSettingsStatus').innerHTML = '<p style="color: red;">✗ Failed to save WAHA configuration</p>';
+            }
+        }
+        
+        // Load WAHA Configuration from backend
+        async function loadWAHAConfigurationFromBackend() {
+            try {
+                const result = await LMSUtils.apiCall('/whatsapp/config');
+                
+                if (result.success && result.config) {
+                    document.getElementById('wahaBaseUrl').value = result.config.baseUrl || '';
+                    document.getElementById('wahaApiKey').value = result.config.apiKey || '';
+                    document.getElementById('wahaSessionName').value = result.config.sessionName || '';
+                    
+                    document.getElementById('whatsappSettingsStatus').innerHTML = '<p style="color: green;">✓ WAHA configuration loaded from server</p>';
+                } else {
+                    // Fallback to hardcoded values if no config found
+                    document.getElementById('wahaBaseUrl').value = 'https://waha.amankhan.space';
+                    document.getElementById('wahaApiKey').value = 'Americanhairline@123';
+                    document.getElementById('wahaSessionName').value = 'aman';
+                    
+                    document.getElementById('whatsappSettingsStatus').innerHTML = '<p style="color: orange;">⚠ Using default WAHA configuration</p>';
+                }
+            } catch (error) {
+                console.error('Failed to load WAHA configuration:', error);
+                // Fallback to hardcoded values
+                document.getElementById('wahaBaseUrl').value = 'https://waha.amankhan.space';
+                document.getElementById('wahaApiKey').value = 'Americanhairline@123';
+                document.getElementById('wahaSessionName').value = 'aman';
+                
+                document.getElementById('whatsappSettingsStatus').innerHTML = '<p style="color: red;">✗ Failed to load configuration, using defaults</p>';
+            }
+        }
+        
+        // Modal functions
+        function hideTestConnectionModal() {
+            document.getElementById('testConnectionModal').style.display = 'none';
+        }
+        
+        function hideUserPhonesModal() {
+            document.getElementById('userPhonesModal').style.display = 'none';
+        }
+        
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
+        });
+        
+        // Initialize page when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initWhatsAppSettingsPage);
+    </script>
+</body>
+</html>

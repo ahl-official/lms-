@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Completion Popup</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .popup-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        @keyframes slideUp {
+            from { 
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to { 
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .popup-header {
+            background: linear-gradient(135deg, #007bff, #6610f2);
+            color: white;
+            padding: 25px;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+        }
+        
+        .popup-header h2 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+        
+        .popup-header .subtitle {
+            margin-top: 10px;
+            opacity: 0.9;
+            font-size: 0.95em;
+        }
+        
+        .popup-body {
+            padding: 30px;
+        }
+        
+        .test-info-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .test-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .test-description {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .test-description h5 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        
+        .test-description p {
+            margin: 0;
+            color: #424242;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+        
+        .btn-take-test {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+        
+        .btn-take-test:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+            color: white;
+        }
+        
+        .btn-skip {
+            background: #6c757d;
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-skip:hover {
+            background: #5a6268;
+            color: white;
+        }
+        
+        .previous-attempts {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e9ecef;
+        }
+        
+        .attempt-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .attempt-score {
+            font-weight: bold;
+        }
+        
+        .attempt-score.passed {
+            color: #28a745;
+        }
+        
+        .attempt-score.failed {
+            color: #dc3545;
+        }
+        
+        .attempt-date {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        
+        .no-test-required {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .no-test-icon {
+            font-size: 4em;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+        
+        .progress-indicator {
+            background: #e9ecef;
+            height: 8px;
+            border-radius: 4px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #28a745);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .unlock-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .unlock-info h6 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .unlock-info p {
+            color: #856404;
+            margin: 0;
+            font-size: 0.9em;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Test Completion Popup -->
+    <div class="popup-overlay" id="testPopup">
+        <div class="popup-content">
+            <!-- Loading State -->
+            <div class="loading" id="loadingState">
+                <div class="spinner"></div>
+                <p>Loading test information...</p>
+            </div>
+            
+            <!-- Test Required State -->
+            <div class="hidden" id="testRequiredState">
+                <div class="popup-header">
+                    <h2><i class="fas fa-clipboard-check"></i> Complete Your Learning</h2>
+                    <div class="subtitle">Take a quick test to unlock the next video</div>
+                </div>
+                
+                <div class="popup-body">
+                    <div class="test-info-card">
+                        <div class="test-stats">
+                            <div class="stat-item">
+                                <div class="stat-value" id="questionCount">10</div>
+                                <div class="stat-label">Questions</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="passingScore">70%</div>
+                                <div class="stat-label">Passing Score</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="timeLimit">15 min</div>
+                                <div class="stat-label">Time Limit</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="attemptsLeft">5</div>
+                                <div class="stat-label">Attempts Left</div>
+                            </div>
+                        </div>
+                        
+                        <div class="test-description">
+                            <h5><i class="fas fa-info-circle"></i> About This Test</h5>
+                            <p id="testDescription">This AI-generated test will assess your understanding of the video content. Questions include multiple choice, short answers, and may include audio responses.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Previous Attempts -->
+                    <div class="previous-attempts hidden" id="previousAttempts">
+                        <h6><i class="fas fa-history"></i> Previous Attempts</h6>
+                        <div id="attemptsList">
+                            <!-- Attempts will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Unlock Information -->
+                    <div class="unlock-info">
+                        <h6><i class="fas fa-unlock-alt"></i> What happens next?</h6>
+                        <p>Pass this test to unlock "<span id="nextVideoTitle">Next Video</span>" and continue your learning journey.</p>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-take-test" onclick="startTest()">
+                            <i class="fas fa-play"></i> Start Test
+                        </button>
+                        <button class="btn btn-skip" onclick="skipForNow()">
+                            <i class="fas fa-clock"></i> Skip for Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- No Test Required State -->
+            <div class="hidden" id="noTestState">
+                <div class="popup-header">
+                    <h2><i class="fas fa-check-circle"></i> Video Completed!</h2>
+                    <div class="subtitle">Great job! You can continue to the next video.</div>
+                </div>
+                
+                <div class="popup-body">
+                    <div class="no-test-required">
+                        <div class="no-test-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <h4>Excellent Work!</h4>
+                        <p class="mb-4">This video doesn't require a test. You can proceed directly to the next lesson.</p>
+                        
+                        <div class="progress-indicator">
+                            <div class="progress-bar" id="courseProgress" style="width: 0%"></div>
+                        </div>
+                        <small class="text-muted">Course Progress: <span id="progressText">0%</span></small>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-take-test" onclick="continueToNext()">
+                            <i class="fas fa-arrow-right"></i> Continue Learning
+                        </button>
+                        <button class="btn btn-skip" onclick="closePopup()">
+                            <i class="fas fa-times"></i> Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Already Passed State -->
+            <div class="hidden" id="alreadyPassedState">
+                <div class="popup-header">
+                    <h2><i class="fas fa-medal"></i> Test Already Completed!</h2>
+                    <div class="subtitle">You've successfully passed this test</div>
+                </div>
+                
+                <div class="popup-body">
+                    <div class="test-info-card">
+                        <div class="text-center mb-3">
+                            <div class="stat-value text-success" id="currentScore">85%</div>
+                            <div class="stat-label">Your Best Score</div>
+                        </div>
+                        
+                        <div class="test-description">
+                            <h5><i class="fas fa-check-circle text-success"></i> Congratulations!</h5>
+                            <p>You've already passed this test. The next video has been unlocked for you.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-take-test" onclick="continueToNext()">
+                            <i class="fas fa-arrow-right"></i> Continue to Next Video
+                        </button>
+                        <button class="btn btn-secondary" onclick="retakeTest()">
+                            <i class="fas fa-redo"></i> Retake Test
+                        </button>
+                        <button class="btn btn-skip" onclick="closePopup()">
+                            <i class="fas fa-times"></i> Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let currentVideoId = null;
+        let testInfo = null;
+        let nextVideoInfo = null;
+        
+        // Initialize popup
+        function initializeTestPopup(videoId) {
+            currentVideoId = videoId;
+            showLoadingState();
+            loadTestInformation();
+        }
+        
+        // Show loading state
+        function showLoadingState() {
+            hideAllStates();
+            document.getElementById('loadingState').classList.remove('hidden');
+        }
+        
+        // Hide all states
+        function hideAllStates() {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('testRequiredState').classList.add('hidden');
+            document.getElementById('noTestState').classList.add('hidden');
+            document.getElementById('alreadyPassedState').classList.add('hidden');
+        }
+        
+        // Load test information
+        async function loadTestInformation() {
+            try {
+                // Check if test is required for this video
+                const response = await fetch(`/api/ai-test/can-take/${currentVideoId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token') || 'session'}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load test information');
+                }
+                
+                const data = await response.json();
+                testInfo = data;
+                
+                // Load next video information
+                await loadNextVideoInfo();
+                
+                // Determine which state to show
+                if (data.lastAttemptScore && data.lastAttemptScore >= 70) {
+                    showAlreadyPassedState(data);
+                } else if (data.canTake) {
+                    showTestRequiredState(data);
+                } else if (data.reason === 'No test required') {
+                    showNoTestState();
+                } else {
+                    showTestRequiredState(data);
+                }
+                
+            } catch (error) {
+                console.error('Error loading test information:', error);
+                showNoTestState(); // Fallback to no test state
+            }
+        }
+        
+        // Load next video information
+        async function loadNextVideoInfo() {
+            try {
+                const response = await fetch(`/api/videos/${currentVideoId}/next`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token') || 'session'}`
+                    }
+                });
+                
+                if (response.ok) {
+                    nextVideoInfo = await response.json();
+                    if (nextVideoInfo && nextVideoInfo.title) {
+                        document.getElementById('nextVideoTitle').textContent = nextVideoInfo.title;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading next video info:', error);
+            }
+        }
+        
+        // Show test required state
+        function showTestRequiredState(data) {
+            hideAllStates();
+            
+            // Update test statistics
+            document.getElementById('questionCount').textContent = '10'; // Default
+            document.getElementById('passingScore').textContent = '70%'; // Default
+            document.getElementById('timeLimit').textContent = '15 min'; // Default
+            document.getElementById('attemptsLeft').textContent = data.attemptsRemaining || '5';
+            
+            // Load previous attempts if any
+            loadPreviousAttempts();
+            
+            document.getElementById('testRequiredState').classList.remove('hidden');
+        }
+        
+        // Show no test state
+        function showNoTestState() {
+            hideAllStates();
+            
+            // Update progress if available
+            updateCourseProgress();
+            
+            document.getElementById('noTestState').classList.remove('hidden');
+        }
+        
+        // Show already passed state
+        function showAlreadyPassedState(data) {
+            hideAllStates();
+            
+            document.getElementById('currentScore').textContent = data.lastAttemptScore + '%';
+            
+            document.getElementById('alreadyPassedState').classList.remove('hidden');
+        }
+        
+        // Load previous attempts
+        async function loadPreviousAttempts() {
+            try {
+                const response = await fetch(`/api/ai-test/history/${currentVideoId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token') || 'session'}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const history = await response.json();
+                    
+                    if (history.history && history.history.length > 0) {
+                        displayPreviousAttempts(history.history);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading previous attempts:', error);
+            }
+        }
+        
+        // Display previous attempts
+        function displayPreviousAttempts(attempts) {
+            const attemptsList = document.getElementById('attemptsList');
+            const previousAttemptsSection = document.getElementById('previousAttempts');
+            
+            attemptsList.innerHTML = '';
+            
+            attempts.forEach((attempt, index) => {
+                const attemptDiv = document.createElement('div');
+                attemptDiv.className = 'attempt-item';
+                
+                const scoreClass = attempt.passed ? 'passed' : 'failed';
+                const date = new Date(attempt.completed_at).toLocaleDateString();
+                
+                attemptDiv.innerHTML = `
+                    <div>
+                        <strong>Attempt ${attempts.length - index}</strong>
+                        <div class="attempt-date">${date}</div>
+                    </div>
+                    <div class="attempt-score ${scoreClass}">
+                        ${attempt.percentage_score}%
+                        ${attempt.passed ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-times-circle"></i>'}
+                    </div>
+                `;
+                
+                attemptsList.appendChild(attemptDiv);
+            });
+            
+            previousAttemptsSection.classList.remove('hidden');
+        }
+        
+        // Update course progress
+        async function updateCourseProgress() {
+            try {
+                const response = await fetch(`/api/progress/course-progress`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token') || 'session'}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const progress = await response.json();
+                    const percentage = progress.progressPercentage || 0;
+                    
+                    document.getElementById('courseProgress').style.width = percentage + '%';
+                    document.getElementById('progressText').textContent = percentage + '%';
+                }
+            } catch (error) {
+                console.error('Error loading course progress:', error);
+            }
+        }
+        
+        // Action functions
+        function startTest() {
+            window.location.href = `/ai-test-interface.html?videoId=${currentVideoId}`;
+        }
+        
+        function retakeTest() {
+            if (confirm('Are you sure you want to retake this test? This will count as a new attempt.')) {
+                startTest();
+            }
+        }
+        
+        function continueToNext() {
+            if (nextVideoInfo && nextVideoInfo.id) {
+                window.location.href = `/student-dashboard.html?video=${nextVideoInfo.id}`;
+            } else {
+                // Go back to course overview
+                window.location.href = '/student-dashboard.html';
+            }
+        }
+        
+        function skipForNow() {
+            closePopup();
+        }
+        
+        function closePopup() {
+            document.getElementById('testPopup').style.display = 'none';
+        }
+        
+        // Initialize popup when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get video ID from URL parameters or parent window
+            const urlParams = new URLSearchParams(window.location.search);
+            const videoId = urlParams.get('videoId') || window.parent?.currentVideoId;
+            
+            if (videoId) {
+                initializeTestPopup(videoId);
+            } else {
+                console.error('No video ID provided for test popup');
+                showNoTestState();
+            }
+        });
+        
+        // Close popup when clicking outside
+        document.getElementById('testPopup').addEventListener('click', (e) => {
+            if (e.target.id === 'testPopup') {
+                closePopup();
+            }
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closePopup();
+            } else if (e.key === 'Enter') {
+                const testRequiredVisible = !document.getElementById('testRequiredState').classList.contains('hidden');
+                if (testRequiredVisible) {
+                    startTest();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

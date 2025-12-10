@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Students Management - AHL Training Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>AHL Training</h2>
+            <ul class="nav-menu">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="students.html" class="active">Students</a></li>
+                <li><a href="trainers.html">Trainers</a></li>
+                <li><a href="courses.html">Courses</a></li>
+                <li><a href="roles.html">Roles</a></li>
+                <li><a href="ai-settings.html">AI Settings</a></li>
+                <li><a href="whatsapp-settings.html">WhatsApp Settings</a></li>
+                <li><a href="#" class="logout-btn">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <main class="main-content">
+            <header class="header">
+                <h1>Students Management</h1>
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <button class="logout-btn">Logout</button>
+                </div>
+            </header>
+            
+            <!-- Students Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalStudents">0</div>
+                    <div class="stat-label">Total Students</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="activeStudents">0</div>
+                    <div class="stat-label">Active Students</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="completedCourses">0</div>
+                    <div class="stat-label">Completed Courses</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="averageProgress">0%</div>
+                    <div class="stat-label">Average Progress</div>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="card">
+                <div class="flex justify-between align-center mb-1">
+                    <h3>All Students</h3>
+                    <div class="flex gap-1">
+                        <input type="text" id="searchInput" placeholder="Search students..." style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                        <select id="roleFilter" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                            <option value="">All Roles</option>
+                            <!-- Roles will be loaded dynamically -->
+                        </select>
+                        <button class="btn btn-primary" onclick="showCreateStudentModal()">Add Student</button>
+                    </div>
+                </div>
+                
+                <div id="studentsTableContainer">
+                    <p>Loading students...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Create Student Modal -->
+    <div id="createStudentModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 5% auto; padding: 2rem; width: 90%; max-width: 500px; border-radius: 10px;">
+            <h3>Add New Student</h3>
+            <form id="createStudentForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="studentName">Name:</label>
+                        <input type="text" id="studentName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="studentEmail">Email:</label>
+                        <input type="email" id="studentEmail" name="email" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="studentPhone">Phone:</label>
+                        <input type="tel" id="studentPhone" name="phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="studentPassword">Password:</label>
+                        <input type="password" id="studentPassword" name="password" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="studentCourseRole">Course Role:</label>
+                    <select id="studentCourseRole" name="course_role" required>
+                        <option value="">Select Course Role</option>
+                        <!-- Course roles will be loaded dynamically -->
+                    </select>
+                </div>
+                <div class="flex gap-1 mt-1">
+                    <button type="submit" class="btn btn-primary">Add Student</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideCreateStudentModal()">Cancel</button>
+                </div>
+            </form>
+            <div id="createStudentError" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <!-- Student Details Modal -->
+    <div id="studentDetailsModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 2% auto; padding: 2rem; width: 90%; max-width: 800px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
+            <div class="flex justify-between align-center mb-2">
+                <h3 id="studentDetailsTitle">Student Details</h3>
+                <button class="btn btn-secondary" onclick="hideStudentDetailsModal()">Close</button>
+            </div>
+            <div id="studentDetailsContent">
+                <!-- Student details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Student Modal -->
+    <div id="editStudentModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 5% auto; padding: 2rem; width: 90%; max-width: 500px; border-radius: 10px;">
+            <h3>Edit Student Information</h3>
+            <form id="editStudentForm">
+                <input type="hidden" id="editStudentId" name="id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editStudentName">Name:</label>
+                        <input type="text" id="editStudentName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editStudentEmail">Email:</label>
+                        <input type="email" id="editStudentEmail" name="email" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editStudentPhone">Phone:</label>
+                        <input type="tel" id="editStudentPhone" name="phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="editStudentCourseRole">Course Role:</label>
+                        <select id="editStudentCourseRole" name="course_role">
+                            <option value="">Select Course Role</option>
+                            <!-- Course roles will be loaded dynamically -->
+                        </select>
+                    </div>
+                </div>
+                <div class="flex gap-1 mt-1">
+                    <button type="submit" class="btn btn-primary">Update Student</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideEditStudentModal()">Cancel</button>
+                </div>
+            </form>
+            <div id="editStudentError" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <!-- Delete Student Confirmation Modal -->
+    <div id="deleteStudentModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 15% auto; padding: 2rem; width: 90%; max-width: 400px; border-radius: 10px; text-align: center;">
+            <h3 style="color: #dc3545; margin-bottom: 1rem;">Confirm Delete</h3>
+            <p id="deleteStudentMessage" style="margin-bottom: 2rem;">Are you sure you want to delete this student?</p>
+            <div class="flex gap-1 justify-center">
+                <button id="confirmDeleteBtn" class="btn btn-danger">Delete</button>
+                <button class="btn btn-secondary" onclick="hideDeleteStudentModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../js/main.js"></script>
+    <script src="../js/admin-students.js"></script>
+</body>
+</html>

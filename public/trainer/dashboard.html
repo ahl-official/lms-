@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trainer Dashboard - AHL Training Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>AHL Training</h2>
+            <ul class="nav-menu">
+                <li><a href="dashboard.html" class="active">Dashboard</a></li>
+                <li><a href="students.html">My Students</a></li>
+                <li><a href="activities.html">Activities Review</a></li>
+                <li><a href="#" class="logout-btn">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <main class="main-content">
+            <header class="header">
+                <h1>Trainer Dashboard</h1>
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <button class="logout-btn">Logout</button>
+                </div>
+            </header>
+            
+            <!-- Welcome Section -->
+            <div class="card">
+                <h2 id="welcomeMessage">Welcome back!</h2>
+                <p id="roleInfo">Loading your training information...</p>
+            </div>
+            
+            <!-- Statistics Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalStudents">0</div>
+                    <div class="stat-label">My Students</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pendingSubmissions">0</div>
+                    <div class="stat-label">Pending Reviews</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="completedReviews">0</div>
+                    <div class="stat-label">Reviewed Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="averageProgress">0%</div>
+                    <div class="stat-label">Avg. Student Progress</div>
+                </div>
+            </div>
+            
+            <!-- Pending Activities -->
+            <div class="card">
+                <div class="flex justify-between align-center mb-1">
+                    <h3>Pending Activity Reviews</h3>
+                    <a href="activities.html" class="btn btn-primary">View All Activities</a>
+                </div>
+                <div id="pendingActivitiesList">
+                    <p>Loading pending activities...</p>
+                </div>
+            </div>
+            
+            <!-- Student Progress Overview -->
+            <div class="card">
+                <div class="flex justify-between align-center mb-1">
+                    <h3>Student Progress Overview</h3>
+                    <a href="students.html" class="btn btn-secondary">View All Students</a>
+                </div>
+                <div id="studentProgressList">
+                    <p>Loading student progress...</p>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="card">
+                <h3>Recent Activity</h3>
+                <div id="recentActivity">
+                    <p>Loading recent activity...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Quick Review Modal -->
+    <div id="quickReviewModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 3% auto; padding: 2rem; width: 90%; max-width: 700px; border-radius: 10px; max-height: 85vh; overflow-y: auto;">
+            <div class="flex justify-between align-center mb-1">
+                <h3 id="reviewModalTitle">Review Activity</h3>
+                <button class="btn btn-secondary" onclick="closeQuickReviewModal()">×</button>
+            </div>
+            
+            <div id="reviewContent">
+                <!-- Review content will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <script src="../js/main.js"></script>
+    <script>
+        let currentUser = null;
+        let myStudents = [];
+        let pendingSubmissions = [];
+        let allSubmissions = [];
+        let studentProgress = [];
+        
+        // Initialize trainer dashboard
+        async function initTrainerDashboard() {
+            try {
+                currentUser = await LMSUtils.getCurrentUser();
+                if (!currentUser) {
+                    return;
+                }
+                
+                if (currentUser.role !== 'trainer') {
+                    window.location.href = '/';
+                    return;
+                }
+                
+                document.getElementById('userName').textContent = currentUser.name;
+                document.getElementById('welcomeMessage').textContent = `Welcome back, ${currentUser.name}!`;
+                document.getElementById('roleInfo').textContent = `Training Role: ${currentUser.course_role || 'Not assigned'} Trainer`;
+                
+                await loadTrainerData();
+                updateDashboard();
+            } catch (error) {
+                console.error('Trainer dashboard initialization failed:', error);
+                window.location.href = '/';
+            }
+        }
+        
+        // Load trainer data
+        async function loadTrainerData() {
+            try {
+                // Get students for this trainer's course
+                myStudents = await LMSUtils.apiCall('/students');
+                
+                // Get all submissions
+                allSubmissions = await LMSUtils.apiCall('/submissions');
+                
+                // Filter submissions for my students
+                const myStudentIds = myStudents.map(s => s.id);
+                pendingSubmissions = allSubmissions.filter(submission => 
+                    myStudentIds.includes(submission.user_id) && submission.status === 'pending'
+                );
+                
+                // Get progress for my students
+                studentProgress = [];
+                for (const student of myStudents) {
+                    try {
+                        const progress = await LMSUtils.apiCall(`/progress/${student.id}`);
+                        studentProgress.push({
+                            student: student,
+                            progress: progress
+                        });
+                    } catch (error) {
+                        console.error(`Failed to load progress for student ${student.id}:`, error);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Failed to load trainer data:', error);
+                LMSUtils.showNotification('Failed to load trainer data', 'error');
+            }
+        }
+        
+        // Update dashboard with data
+        function updateDashboard() {
+            updateStatistics();
+            renderPendingActivities();
+            renderStudentProgress();
+            renderRecentActivity();
+        }
+        
+        // Update statistics
+        function updateStatistics() {
+            const totalStudents = myStudents.length;
+            const pendingCount = pendingSubmissions.length;
+            
+            // Count reviews completed today
+            const today = new Date().toDateString();
+            const reviewedToday = allSubmissions.filter(submission => {
+                const reviewDate = submission.reviewed_at ? new Date(submission.reviewed_at).toDateString() : null;
+                return reviewDate === today && (submission.status === 'approved' || submission.status === 'rejected');
+            }).length;
+            
+            // Calculate average progress
+            let totalProgress = 0;
+            let studentsWithProgress = 0;
+            
+            studentProgress.forEach(sp => {
+                if (sp.progress && sp.progress.length > 0) {
+                    const completedVideos = sp.progress.filter(p => p.completed).length;
+                    const totalVideos = sp.progress.length;
+                    if (totalVideos > 0) {
+                        totalProgress += (completedVideos / totalVideos) * 100;
+                        studentsWithProgress++;
+                    }
+                }
+            });
+            
+            const averageProgress = studentsWithProgress > 0 ? Math.round(totalProgress / studentsWithProgress) : 0;
+            
+            document.getElementById('totalStudents').textContent = totalStudents;
+            document.getElementById('pendingSubmissions').textContent = pendingCount;
+            document.getElementById('completedReviews').textContent = reviewedToday;
+            document.getElementById('averageProgress').textContent = `${averageProgress}%`;
+        }
+        
+        // Render pending activities
+        function renderPendingActivities() {
+            const container = document.getElementById('pendingActivitiesList');
+            
+            if (pendingSubmissions.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-success">
+                        <p><strong>Great job!</strong> No pending activity reviews at the moment.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Show only first 5 pending submissions
+            const recentPending = pendingSubmissions.slice(0, 5);
+            
+            const activitiesHTML = recentPending.map(submission => {
+                const student = myStudents.find(s => s.id === submission.user_id);
+                const studentName = student ? student.name : 'Unknown Student';
+                const daysAgo = Math.floor((Date.now() - new Date(submission.submitted_at)) / (1000 * 60 * 60 * 24));
+                
+                return `
+                    <div class="activity-item" style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <div class="flex justify-between align-items-center">
+                            <div class="activity-info" style="flex: 1;">
+                                <h5 style="margin: 0 0 0.5rem 0;">${submission.activity_title || 'Activity Submission'}</h5>
+                                <p style="margin: 0; color: #666; font-size: 0.9rem;">
+                                    <strong>Student:</strong> ${studentName} | 
+                                    <strong>Submitted:</strong> ${daysAgo === 0 ? 'Today' : `${daysAgo} day${daysAgo > 1 ? 's' : ''} ago`}
+                                </p>
+                                <p style="margin: 0.25rem 0 0 0; color: #666; font-size: 0.85rem;">
+                                    ${(submission.content || submission.submission_text) ? (submission.content || submission.submission_text).substring(0, 100) + '...' : 'No text submission'}
+                                </p>
+                            </div>
+                            <div class="activity-actions" style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-success" onclick="quickReview(${submission.id}, 'approve')" style="padding: 0.5rem 1rem;">
+                                    ✓ Approve
+                                </button>
+                                <button class="btn btn-danger" onclick="quickReview(${submission.id}, 'reject')" style="padding: 0.5rem 1rem;">
+                                    ✗ Reject
+                                </button>
+                                <button class="btn btn-secondary" onclick="detailedReview(${submission.id})" style="padding: 0.5rem 1rem;">
+                                    Review
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = activitiesHTML;
+        }
+        
+        // Render student progress
+        function renderStudentProgress() {
+            const container = document.getElementById('studentProgressList');
+            
+            if (myStudents.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-info">
+                        <p>No students assigned to your training role yet.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const progressHTML = studentProgress.slice(0, 5).map(sp => {
+                const student = sp.student;
+                const progress = sp.progress || [];
+                
+                const completedVideos = progress.filter(p => p.completed).length;
+                const totalVideos = progress.length;
+                const progressPercent = totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0;
+                
+                // Get recent submissions for this student
+                const studentSubmissions = allSubmissions.filter(s => s.user_id === student.id);
+                const pendingCount = studentSubmissions.filter(s => s.status === 'pending').length;
+                
+                return `
+                    <div class="student-progress-item" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <div class="flex justify-between align-items-center">
+                            <div class="student-info" style="flex: 1;">
+                                <h5 style="margin: 0 0 0.5rem 0;">${student.name}</h5>
+                                <p style="margin: 0; color: #666; font-size: 0.9rem;">
+                                    <strong>Email:</strong> ${student.email} | 
+                                    <strong>Phone:</strong> ${student.phone || 'Not provided'}
+                                </p>
+                                <div class="progress-info" style="margin-top: 0.5rem;">
+                                    <div class="flex align-items-center gap-1">
+                                        <span style="font-size: 0.9rem; color: #666;">Progress: ${completedVideos}/${totalVideos} videos</span>
+                                        ${pendingCount > 0 ? `<span class="status-badge status-warning" style="font-size: 0.8rem;">${pendingCount} pending</span>` : ''}
+                                    </div>
+                                    <div class="progress-bar" style="background: #e0e0e0; border-radius: 5px; height: 8px; margin-top: 0.25rem;">
+                                        <div class="progress-fill" style="background: #4CAF50; height: 100%; border-radius: 5px; width: ${progressPercent}%; transition: width 0.3s ease;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="student-actions">
+                                <a href="students.html?student=${student.id}" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = progressHTML;
+        }
+        
+        // Render recent activity
+        function renderRecentActivity() {
+            const container = document.getElementById('recentActivity');
+            
+            // Combine recent submissions and reviews
+            const recentItems = [];
+            
+            // Add recent submissions
+            allSubmissions.slice(0, 10).forEach(submission => {
+                const student = myStudents.find(s => s.id === submission.user_id);
+                if (student) {
+                    recentItems.push({
+                        type: 'submission',
+                        title: `${student.name} submitted an activity`,
+                        date: submission.submitted_at,
+                        status: submission.status,
+                        icon: submission.status === 'pending' ? '📝' : submission.status === 'approved' ? '✅' : '❌'
+                    });
+                }
+            });
+            
+            // Sort by date (most recent first)
+            recentItems.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            if (recentItems.length === 0) {
+                container.innerHTML = '<p>No recent activity.</p>';
+                return;
+            }
+            
+            const activityHTML = recentItems.slice(0, 8).map(item => `
+                <div class="activity-item" style="display: flex; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #eee;">
+                    <div class="activity-icon" style="font-size: 1.2rem; margin-right: 1rem;">${item.icon}</div>
+                    <div class="activity-content" style="flex: 1;">
+                        <p style="margin: 0; font-weight: 500;">${item.title}</p>
+                        <small style="color: #666;">${LMSUtils.formatDate(item.date)}</small>
+                        ${item.status ? `<span class="status-badge status-${item.status}" style="margin-left: 0.5rem;">${item.status}</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = activityHTML;
+        }
+        
+        // Quick review (approve/reject without detailed feedback)
+        async function quickReview(submissionId, action) {
+            const submission = pendingSubmissions.find(s => s.id === submissionId);
+            if (!submission) return;
+            
+            const student = myStudents.find(s => s.id === submission.user_id);
+            const studentName = student ? student.name : 'Unknown Student';
+            
+            const confirmMessage = action === 'approve' ? 
+                `Are you sure you want to approve ${studentName}'s activity submission?` :
+                `Are you sure you want to reject ${studentName}'s activity submission?`;
+            
+            if (!confirm(confirmMessage)) return;
+            
+            try {
+                await LMSUtils.apiCall(`/activities/${submissionId}/approve`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        status: action === 'approve' ? 'approved' : 'rejected',
+                        feedback: action === 'approve' ? 'Good work!' : 'Please review and resubmit.'
+                    })
+                });
+                
+                LMSUtils.showNotification(`Activity ${action}d successfully!`, 'success');
+                
+                // Reload data and update UI
+                await loadTrainerData();
+                updateDashboard();
+                
+            } catch (error) {
+                console.error(`Failed to ${action} submission:`, error);
+                LMSUtils.showNotification(`Failed to ${action} activity`, 'error');
+            }
+        }
+        
+        // Detailed review
+        function detailedReview(submissionId) {
+            const submission = pendingSubmissions.find(s => s.id === submissionId);
+            if (!submission) return;
+            
+            const student = myStudents.find(s => s.id === submission.user_id);
+            const studentName = student ? student.name : 'Unknown Student';
+            
+            showDetailedReviewModal(submission, student);
+        }
+        
+        // Show detailed review modal
+        function showDetailedReviewModal(submission, student) {
+            const modalTitle = document.getElementById('reviewModalTitle');
+            const modalContent = document.getElementById('reviewContent');
+            
+            modalTitle.textContent = `Review: ${student.name}'s Activity`;
+            
+            modalContent.innerHTML = `
+                <div class="review-form">
+                    <div class="submission-info" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                        <h4>Submission Details</h4>
+                        <p><strong>Student:</strong> ${student.name} (${student.email})</p>
+                        <p><strong>Submitted:</strong> ${LMSUtils.formatDate(submission.submitted_at)}</p>
+                        <p><strong>Activity:</strong> ${submission.activity_title || 'Activity Submission'}</p>
+                    </div>
+                    
+                    <div class="submission-content" style="background: white; border: 1px solid #ddd; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                        <h4>Student's Submission</h4>
+                        <div style="white-space: pre-wrap; line-height: 1.6; max-height: 200px; overflow-y: auto;">${submission.content || submission.submission_text || 'No text submission'}</div>
+                        ${submission.file_path ? `
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                                <strong>Attached File:</strong> 
+                                <a href="${submission.file_path}" target="_blank" class="btn btn-secondary" style="margin-left: 0.5rem; padding: 0.25rem 0.75rem;">View File</a>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <form id="detailedReviewForm">
+                        <input type="hidden" id="reviewSubmissionId" value="${submission.id}">
+                        
+                        <div class="form-group">
+                            <label for="reviewDecision">Decision:</label>
+                            <select id="reviewDecision" name="decision" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px;">
+                                <option value="">Select Decision</option>
+                                <option value="approve">✅ Approve</option>
+                                <option value="reject">❌ Reject</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="reviewFeedback">Feedback for Student:</label>
+                            <textarea id="reviewFeedback" name="feedback" rows="4" 
+                                      placeholder="Provide detailed feedback for the student..." 
+                                      required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-family: inherit;"></textarea>
+                        </div>
+                        
+                        <div class="flex gap-1 mt-2">
+                            <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem;">
+                                Submit Review
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="closeQuickReviewModal()" style="padding: 0.75rem 2rem;">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            // Setup form submission
+            document.getElementById('detailedReviewForm').addEventListener('submit', handleDetailedReview);
+            
+            document.getElementById('quickReviewModal').style.display = 'block';
+        }
+        
+        // Handle detailed review submission
+        async function handleDetailedReview(e) {
+            e.preventDefault();
+            
+            const submissionId = document.getElementById('reviewSubmissionId').value;
+            const decision = document.getElementById('reviewDecision').value;
+            const feedback = document.getElementById('reviewFeedback').value;
+            
+            if (!decision || !feedback.trim()) {
+                LMSUtils.showNotification('Please select a decision and provide feedback', 'error');
+                return;
+            }
+            
+            try {
+                await LMSUtils.apiCall(`/activities/${submissionId}/approve`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        status: decision === 'approve' ? 'approved' : 'rejected',
+                        feedback: feedback
+                    })
+                });
+                
+                LMSUtils.showNotification(`Activity ${decision}d successfully!`, 'success');
+                
+                closeQuickReviewModal();
+                
+                // Reload data and update UI
+                await loadTrainerData();
+                updateDashboard();
+                
+            } catch (error) {
+                console.error(`Failed to ${decision} submission:`, error);
+                LMSUtils.showNotification(`Failed to ${decision} activity`, 'error');
+            }
+        }
+        
+        // Close quick review modal
+        function closeQuickReviewModal() {
+            document.getElementById('quickReviewModal').style.display = 'none';
+            document.getElementById('reviewContent').innerHTML = '';
+        }
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target.id === 'quickReviewModal') {
+                closeQuickReviewModal();
+            }
+        });
+        
+        // Initialize dashboard when DOM loads
+        document.addEventListener('DOMContentLoaded', initTrainerDashboard);
+    </script>
+</body>
+</html>

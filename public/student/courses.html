@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Courses - AHL Training Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/adaptive-learning.css">
+</head>
+
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>AHL Training</h2>
+            <ul class="nav-menu">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="courses.html" class="active">My Courses</a></li>
+                <li><a href="activities.html">Activities</a></li>
+                <li><a href="#" class="logout-btn">Logout</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <h1>My Courses</h1>
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <button class="logout-btn">Logout</button>
+                </div>
+            </header>
+
+            <!-- Course Overview -->
+            <div class="card">
+                <div id="courseOverview">
+                    <p>Loading course information...</p>
+                </div>
+            </div>
+
+            <!-- Video Player Section -->
+            <div id="videoPlayerSection" class="card" style="display: none;">
+                <div class="flex justify-between align-center mb-1">
+                    <h3 id="currentVideoTitle">Video Title</h3>
+                    <button class="btn btn-secondary" onclick="closeVideoPlayer()">Close Player</button>
+                </div>
+
+                <div class="video-container"
+                    style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%; margin-bottom: 1rem;">
+                    <iframe id="videoPlayer"
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; border-radius: 8px;"
+                        allowfullscreen>
+                    </iframe>
+                </div>
+
+                <div class="video-controls"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                    <div class="video-info">
+                        <p id="videoDescription" style="margin: 0; color: #666;">Video description will appear here.</p>
+                    </div>
+                    <div class="video-actions">
+                        <button id="markDoneBtn" class="btn btn-success" onclick="markVideoAsDone()"
+                            style="display: none;">
+                            Mark as Done
+                        </button>
+                        <button id="takeTestBtn" class="btn btn-primary" onclick="takeTest()" style="display: none;">
+                            Take Test
+                        </button>
+                        <button id="submitActivityBtn" class="btn btn-warning" onclick="submitActivity()"
+                            style="display: none;">
+                            Submit Activity
+                        </button>
+                        <button id="nextVideoBtn" class="btn btn-secondary" onclick="playNextVideo()"
+                            style="display: none;">
+                            Next Video
+                        </button>
+                    </div>
+                </div>
+
+                <!-- AI Q&A Section -->
+                <div id="aiQASection" class="card"
+                    style="margin-top: 1rem; padding: 1.5rem; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px;">
+                    <h4 style="margin-bottom: 1rem; color: #333; display: flex; align-items: center; gap: 0.5rem;">
+                        🤖 Ask AI about this video
+                    </h4>
+
+                    <div class="qa-input-section" style="margin-bottom: 1rem;">
+                        <textarea id="aiQuestionInput" placeholder="Ask a question about this video content..."
+                            style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; resize: vertical; min-height: 80px; font-family: inherit;"
+                            rows="3"></textarea>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                            <small style="color: #666;">💡 Ask questions about the video content to get AI-powered
+                                explanations</small>
+                            <button id="askAIBtn" class="btn btn-primary" onclick="askAIQuestion()"
+                                style="padding: 0.5rem 1rem;">
+                                Ask AI
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="aiResponseSection" style="display: none;">
+                        <div style="border-top: 1px solid #e9ecef; padding-top: 1rem;">
+                            <h5 style="margin-bottom: 0.5rem; color: #333;">AI Response:</h5>
+                            <div id="aiResponse"
+                                style="background: white; padding: 1rem; border-radius: 5px; border: 1px solid #e9ecef; white-space: pre-wrap; line-height: 1.6;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="aiLoadingSection" style="display: none; text-align: center; padding: 1rem;">
+                        <div style="color: #666;">
+                            <span style="font-size: 1.2rem;">🤔</span> AI is thinking...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Learning Tools Section -->
+                <div id="learningToolsContainer"></div>
+
+                <!-- Test Modal -->
+                <div id="testModal" class="modal"
+                    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+                    <div class="modal-content"
+                        style="background: white; margin: 2% auto; padding: 2rem; width: 90%; max-width: 800px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
+                        <div class="flex justify-between align-center mb-1">
+                            <h3 id="testModalTitle">Video Test</h3>
+                            <button class="btn btn-secondary" onclick="closeTestModal()">×</button>
+                        </div>
+                        <div id="testContent">
+                            <!-- Test content will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Modal -->
+                <div id="activityModal" class="modal"
+                    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001;">
+                    <div class="modal-content"
+                        style="background: white; margin: 2% auto; padding: 2rem; width: 90%; max-width: 800px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
+                        <div class="flex justify-between align-center mb-1">
+                            <h3 id="activityModalTitle">Video Activity</h3>
+                            <button class="btn btn-secondary" onclick="closeActivityModal()">×</button>
+                        </div>
+                        <div id="activityContent">
+                            <!-- Activity content will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Videos List -->
+            <div class="card">
+                <h3>Course Videos</h3>
+                <div id="videosList">
+                    <p>Loading videos...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: false, theme: 'default' });
+    </script>
+    <script src="../js/main.js"></script>
+    <script src="../js/learning-tools.js"></script>
+    <script>
+        let currentUser = null;
+        let userCourse = null;
+        let courseVideos = [];
+        let courseStructure = null;
+        let courseVideoIndexMap = new Map();
+        let userProgress = [];
+        let currentVideoId = null;
+        let lastPlayedVideoId = null; // Store the last played video for test functionality
+        let videoStartTime = null;
+        let currentVideoTest = null;
+        let currentTestResult = null;
+        let videoWorkflowState = 'watching'; // watching, done, test_taken, activity_submitted, completed
+
+        // Initialize courses page
+        async function initCoursesPage() {
+            try {
+                currentUser = await LMSUtils.getCurrentUser();
+                if (!currentUser) {
+                    return;
+                }
+
+                if (currentUser.role !== 'student') {
+                    window.location.href = '/';
+                    return;
+                }
+
+                document.getElementById('userName').textContent = currentUser.name;
+
+                await loadCourseData();
+                renderCourseOverview();
+                await renderVideosList();
+
+                // Initialize adaptive learning system
+                if (typeof AdaptiveLearning !== 'undefined') {
+                    window.adaptiveLearning = new AdaptiveLearning();
+                }
+
+                // Check if specific video should be played from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const videoId = urlParams.get('video');
+                if (videoId) {
+                    playVideo(parseInt(videoId));
+                }
+
+            } catch (error) {
+                console.error('Courses page initialization failed:', error);
+                window.location.href = '/';
+            }
+        }
+
+        // Load course data
+        async function loadCourseData() {
+            try {
+                // Get all courses to find user's course
+                const allCourses = await LMSUtils.apiCall('/courses');
+                userCourse = allCourses.find(course => course.role_name === currentUser.course_role);
+
+                if (userCourse) {
+                    // Load structured course hierarchy
+                    courseStructure = await LMSUtils.apiCall(`/courses/${userCourse.id}/structure`);
+                    courseVideos = buildCourseVideosFromStructure(courseStructure);
+
+                    // Sort videos by global sequence (fallback to ID for consistent order)
+                    courseVideos.sort((a, b) => {
+                        const seqA = a.sequence ?? Number.MAX_SAFE_INTEGER;
+                        const seqB = b.sequence ?? Number.MAX_SAFE_INTEGER;
+                        if (seqA === seqB) {
+                            return a.id - b.id;
+                        }
+                        return seqA - seqB;
+                    });
+
+                    // Build quick lookup for sequential navigation/unlock checks
+                    courseVideoIndexMap = new Map();
+                    courseVideos.forEach((video, index) => {
+                        courseVideoIndexMap.set(video.id, index);
+                    });
+
+                    // Get user's progress
+                    userProgress = await LMSUtils.apiCall(`/progress/${currentUser.id}`);
+                }
+            } catch (error) {
+                console.error('Failed to load course data:', error);
+                LMSUtils.showNotification('Failed to load course data', 'error');
+            }
+        }
+
+        function buildCourseVideosFromStructure(structure) {
+            if (!structure) {
+                return [];
+            }
+
+            const preparedLevels = (structure.levels || []).map((level, levelIndex) => {
+                const levelSequence = level.sequence ?? (levelIndex + 1);
+                const preparedChapters = (level.chapters || []).map((chapter, chapterIndex) => {
+                    const chapterSequence = chapter.sequence ?? (chapterIndex + 1);
+                    const preparedLessons = (chapter.lessons || []).map((lesson, lessonIndex) => ({
+                        ...lesson,
+                        level_id: level.id,
+                        level_title: level.title,
+                        level_sequence: levelSequence,
+                        chapter_id: chapter.id,
+                        chapter_title: chapter.title,
+                        chapter_sequence: chapterSequence,
+                        lesson_number: lessonIndex + 1
+                    }));
+                    return {
+                        ...chapter,
+                        sequence: chapterSequence,
+                        lessons: preparedLessons
+                    };
+                });
+                return {
+                    ...level,
+                    sequence: levelSequence,
+                    chapters: preparedChapters
+                };
+            });
+
+            const videos = [];
+            preparedLevels.forEach(level => {
+                level.chapters.forEach(chapter => {
+                    chapter.lessons.forEach(lesson => videos.push(lesson));
+                });
+            });
+
+            const unassigned = (structure.unassignedLessons || []).map((lesson, index) => ({
+                ...lesson,
+                level_id: null,
+                level_title: 'Unassigned',
+                level_sequence: 9999,
+                chapter_id: null,
+                chapter_title: 'Unassigned',
+                chapter_sequence: 9999,
+                lesson_number: index + 1
+            }));
+
+            videos.push(...unassigned);
+
+            courseStructure = {
+                ...structure,
+                levels: preparedLevels,
+                unassignedLessons: unassigned
+            };
+
+            return videos;
+        }
+
+        // Render course overview
+        function renderCourseOverview() {
+            const container = document.getElementById('courseOverview');
+
+            if (!userCourse) {
+                container.innerHTML = `
+                    <div class="alert alert-warning">
+                        <h3>No Course Assigned</h3>
+                        <p>You haven't been assigned to a training course yet. Please contact your administrator.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const totalVideos = courseVideos.length;
+            const completedVideos = userProgress.filter(p => p.completed).length;
+            const progressPercent = totalVideos > 0 ? (completedVideos / totalVideos) * 100 : 0;
+
+            container.innerHTML = `
+                <div class="course-header">
+                    <h2>${userCourse.title}</h2>
+                    <p><strong>Training Role:</strong> ${userCourse.role_name}</p>
+                    <p><strong>Progress:</strong> ${completedVideos}/${totalVideos} videos completed (${Math.round(progressPercent)}%)</p>
+                    
+                    <div class="progress-bar" style="background: #e0e0e0; border-radius: 10px; height: 25px; margin: 1rem 0;">
+                        <div class="progress-fill" style="background: linear-gradient(90deg, #4CAF50, #45a049); height: 100%; border-radius: 10px; width: ${progressPercent}%; transition: width 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                            ${Math.round(progressPercent)}%
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render videos list
+        async function renderVideosList() {
+            const container = document.getElementById('videosList');
+
+            const hasLevels = courseStructure && Array.isArray(courseStructure.levels) && courseStructure.levels.length > 0;
+            const hasUnassigned = courseStructure && Array.isArray(courseStructure.unassignedLessons) && courseStructure.unassignedLessons.length > 0;
+
+            if (!hasLevels && !hasUnassigned) {
+                container.innerHTML = '<p>No lessons available in this course yet.</p>';
+                return;
+            }
+
+            // Get user submissions for workflow status
+            let userSubmissions = [];
+            try {
+                userSubmissions = await LMSUtils.apiCall(`/submissions/student/${currentUser.id}`);
+            } catch (error) {
+                console.error('Failed to load submissions:', error);
+            }
+
+            const renderLessonCard = (video) => {
+                const progress = userProgress.find(p => p.video_id === video.id);
+                const isCompleted = progress && progress.completed;
+                const watchTime = progress ? progress.watch_time : 0;
+                const isLocked = !isVideoUnlocked(video, userSubmissions);
+
+                let workflowStatus = 'locked';
+                let statusText = '🔒 Locked';
+                let statusClass = 'locked';
+                let statusColor = '#999';
+
+                if (!isLocked) {
+                    const submission = userSubmissions.find(s => s.video_id === video.id);
+                    if (submission && submission.status === 'approved') {
+                        workflowStatus = 'completed';
+                        statusText = '✅ Completed';
+                        statusClass = 'completed';
+                        statusColor = '#4CAF50';
+                    } else if (submission && submission.status === 'rejected') {
+                        workflowStatus = 'activity_rejected';
+                        statusText = '❌ Activity Rejected - Resubmit Required';
+                        statusClass = 'rejected';
+                        statusColor = '#f44336';
+                    } else if (submission && submission.status === 'pending') {
+                        workflowStatus = 'activity_submitted';
+                        statusText = '📝 Activity Submitted';
+                        statusClass = 'submitted';
+                        statusColor = '#FF9800';
+                    } else if (isCompleted) {
+                        workflowStatus = 'video_done';
+                        statusText = '🎯 Ready for Test';
+                        statusClass = 'ready-test';
+                        statusColor = '#2196F3';
+                    } else {
+                        workflowStatus = 'available';
+                        statusText = '▶️ Ready to watch';
+                        statusClass = 'available';
+                        statusColor = '#007bff';
+                    }
+                }
+
+                const levelBadge = video.level_title && video.level_sequence !== 9999
+                    ? `<span style="background: #eef3ff; color: #2f54eb; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.75rem; margin-right: 0.5rem;">Level ${video.level_sequence}</span>`
+                    : '';
+
+                const chapterBadge = video.chapter_title && video.chapter_sequence !== 9999
+                    ? `<span style="background: #f0f5ff; color: #1d39c4; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.75rem;">Chapter ${video.level_sequence ?? ''}${video.level_sequence ? '.' : ''}${video.chapter_sequence}</span>`
+                    : '';
+
+                return `
+                    <div class="video-item ${statusClass}" 
+                         style="background: ${workflowStatus === 'completed' ? '#e8f5e8' : isLocked ? '#f5f5f5' : '#fff'}; 
+                                border: 1px solid ${statusColor}; 
+                                padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; 
+                                opacity: ${isLocked ? '0.6' : '1'};">
+                        <div class="flex justify-between align-center">
+                            <div class="video-info" style="flex: 1;">
+                                <div class="flex align-center gap-1 mb-1" style="flex-wrap: wrap;">
+                                    <span class="video-sequence" style="background: ${statusColor}; color: white; padding: 0.25rem 0.5rem; border-radius: 50%; font-weight: bold; min-width: 30px; text-align: center;">
+                                        ${workflowStatus === 'completed' ? '✓' : video.sequence}
+                                    </span>
+                                    <h4 style="margin: 0; color: ${isLocked ? '#999' : '#333'};">${video.title}</h4>
+                                    ${isLocked ? '<span class="lock-icon" style="color: #999; margin-left: 0.5rem;">🔒</span>' : ''}
+                                </div>
+                                <div class="flex align-center" style="gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    ${levelBadge}
+                                    ${chapterBadge}
+                                </div>
+                                <div class="video-stats" style="color: #666; font-size: 0.9rem;">
+                                    <span style="color: ${statusColor}; font-weight: bold;">${statusText}</span>
+                                    ${watchTime > 0 && !isLocked ? `<span style="margin-left: 1rem;">⏱️ Watch time: ${Math.round(watchTime)}s</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="video-actions">
+                                ${!isLocked ? `
+                                    <button class="btn ${workflowStatus === 'completed' ? 'btn-secondary' : 'btn-primary'}" 
+                                            onclick="playVideo(${video.id})" 
+                                            style="padding: 0.75rem 1.5rem;">
+                                        ${workflowStatus === 'completed' ? 'Rewatch' : watchTime > 0 ? 'Continue' : 'Start'}
+                                    </button>
+                                ` : `
+                                    <button class="btn btn-secondary" disabled style="padding: 0.75rem 1.5rem; opacity: 0.5;">
+                                        Locked
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                        ${!isLocked && watchTime > 0 && workflowStatus !== 'completed' ? `
+                            <div class="video-progress" style="margin-top: 1rem;">
+                                <div class="progress-bar" style="background: #e0e0e0; border-radius: 5px; height: 8px;">
+                                    <div class="progress-fill" style="background: ${statusColor}; height: 100%; border-radius: 5px; width: ${Math.min((watchTime / 300) * 100, 100)}%; transition: width 0.3s ease;"></div>
+                                </div>
+                                <small style="color: #666; margin-top: 0.25rem; display: block;">Progress: ${Math.round(Math.min((watchTime / 300) * 100, 100))}%</small>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            };
+
+            const levelSections = (courseStructure.levels || []).map((level, levelIndex) => {
+                const chapterSections = level.chapters.map((chapter, chapterIndex) => {
+                    const lessonsHtml = chapter.lessons.length > 0
+                        ? chapter.lessons.map(lesson => renderLessonCard(lesson)).join('')
+                        : '<p style="color: #999; margin: 0 0 1rem 0;">No lessons in this chapter yet.</p>';
+
+                    return `
+                        <div class="chapter-block" style="margin-bottom: 1.5rem; padding-left: 1rem; border-left: 3px solid #d6e4ff;">
+                            <h4 style="margin-bottom: 0.5rem; color: #1d39c4;">
+                                Chapter ${level.sequence}.${chapter.sequence}: ${chapter.title}
+                            </h4>
+                            ${chapter.description ? `<p style=\"color: #555; margin: 0 0 1rem 0;\">${chapter.description}</p>` : ''}
+                            ${lessonsHtml}
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <section class="level-block" style="margin-bottom: 2.5rem;">
+                        <h3 style="margin-bottom: 1rem; color: #10239e;">
+                            Level ${level.sequence}: ${level.title}
+                        </h3>
+                        ${level.description ? `<p style=\"color: #555; margin: 0 0 1rem 0;\">${level.description}</p>` : ''}
+                        ${chapterSections}
+                    </section>
+                `;
+            }).join('');
+
+            const unassignedSection = (courseStructure.unassignedLessons || []).length > 0
+                ? `
+                    <section class="level-block" style="margin-bottom: 2.5rem;">
+                        <h3 style="margin-bottom: 1rem; color: #595959;">Unassigned Lessons</h3>
+                        ${courseStructure.unassignedLessons.map(lesson => renderLessonCard(lesson)).join('')}
+                    </section>
+                `
+                : '';
+
+            container.innerHTML = [levelSections, unassignedSection].filter(Boolean).join('');
+        }
+
+        // Check if video is unlocked (sequential unlocking)
+        function isVideoUnlocked(video, userSubmissions) {
+            const index = courseVideoIndexMap.get(video.id);
+            if (index === undefined) {
+                return false;
+            }
+
+            if (index === 0) {
+                return true; // First video is always unlocked
+            }
+
+            const previousVideo = courseVideos[index - 1];
+            const previousSubmission = userSubmissions.find(s => s.video_id === previousVideo.id);
+            return previousSubmission && previousSubmission.status === 'approved';
+        }
+
+        // Play video
+        async function playVideo(videoId) {
+            const video = courseVideos.find(v => v.id === videoId);
+            if (!video) return;
+
+            currentVideoId = videoId;
+            lastPlayedVideoId = videoId; // Store for test functionality
+            videoStartTime = Date.now();
+
+            // Extract Gumlet video ID
+            const gumletId = LMSUtils.extractGumletId(video.gumlet_url);
+            if (!gumletId) {
+                LMSUtils.showNotification('Invalid video URL', 'error');
+                return;
+            }
+
+            // Update video player
+            document.getElementById('currentVideoTitle').textContent = `${video.sequence}. ${video.title}`;
+            document.getElementById('videoPlayer').src = `https://play.gumlet.io/embed/${gumletId}`;
+            document.getElementById('videoDescription').textContent = `Video ${video.sequence} of ${courseVideos.length}`;
+
+            // Show video player section
+            document.getElementById('videoPlayerSection').style.display = 'block';
+            document.getElementById('videoPlayerSection').scrollIntoView({ behavior: 'smooth' });
+
+            // Check video workflow state and show appropriate buttons
+            await checkVideoWorkflowState(videoId);
+            updateVideoButtons();
+
+            // Show mark as done button after some time if not already done
+            if (videoWorkflowState === 'watching') {
+                setTimeout(() => {
+                    document.getElementById('markDoneBtn').style.display = 'inline-block';
+                }, 30000); // Show after 30 seconds
+            }
+
+            // Track watch time
+            trackWatchTime();
+
+            // Initialize Learning Tools
+            if (window.learningTools) {
+                window.learningTools.init('learningToolsContainer');
+                window.learningTools.loadTools(videoId);
+            }
+        }
+
+        // Track watch time
+        function trackWatchTime() {
+            if (!currentVideoId || !videoStartTime) return;
+
+            const watchTime = Math.floor((Date.now() - videoStartTime) / 1000);
+
+            // Update progress every 10 seconds
+            setTimeout(async () => {
+                try {
+                    await LMSUtils.apiCall('/progress', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            videoId: currentVideoId,
+                            watchTime: watchTime
+                        })
+                    });
+
+                    // Continue tracking if video is still playing
+                    if (currentVideoId) {
+                        trackWatchTime();
+                    }
+                } catch (error) {
+                    console.error('Failed to track watch time:', error);
+                }
+            }, 10000);
+        }
+
+        // Check video workflow state
+        async function checkVideoWorkflowState(videoId) {
+            try {
+                let videoProgress = null;
+                let testResult = null;
+                let activitySubmission = null;
+
+                // Check if video is marked as done
+                try {
+                    const progressResponse = await fetch(`/api/progress/${currentUser.id}`);
+                    if (progressResponse.ok) {
+                        const progress = await progressResponse.json();
+                        videoProgress = progress.find(p => p.video_id === videoId);
+                    }
+                } catch (e) {
+                    console.warn('Could not fetch progress:', e);
+                }
+
+                // Check if test is taken
+                try {
+                    const testResultResponse = await fetch(`/api/tests/result/${videoId}`);
+                    if (testResultResponse.ok) {
+                        testResult = await testResultResponse.json();
+                    }
+                } catch (e) {
+                    console.warn('Could not fetch test result:', e);
+                }
+
+                // Check if activity is submitted
+                try {
+                    const submissionsResponse = await fetch(`/api/submissions/student/${currentUser.id}`);
+                    if (submissionsResponse.ok) {
+                        const submissions = await submissionsResponse.json();
+                        activitySubmission = submissions.find(s => s.video_id === videoId);
+                    }
+                } catch (e) {
+                    console.warn('Could not fetch submissions:', e);
+                }
+
+                // Determine workflow state
+                if (activitySubmission && activitySubmission.status === 'approved') {
+                    videoWorkflowState = 'completed';
+                } else if (activitySubmission && activitySubmission.status === 'rejected') {
+                    // If activity is rejected, allow resubmission by going back to test_taken state
+                    if (testResult) {
+                        videoWorkflowState = 'test_taken';
+                        currentTestResult = testResult;
+                    } else {
+                        videoWorkflowState = 'done'; // Allow taking test again if needed
+                    }
+                } else if (activitySubmission && activitySubmission.status === 'pending') {
+                    videoWorkflowState = 'activity_submitted';
+                } else if (testResult) {
+                    videoWorkflowState = 'test_taken';
+                    currentTestResult = testResult;
+                } else if (videoProgress && videoProgress.completed) {
+                    videoWorkflowState = 'done';
+                } else {
+                    videoWorkflowState = 'watching';
+                }
+
+            } catch (error) {
+                console.error('Error checking workflow state:', error);
+                videoWorkflowState = 'watching';
+            }
+        }
+
+        // Update video buttons based on workflow state
+        function updateVideoButtons() {
+            // Hide all buttons first
+            document.getElementById('markDoneBtn').style.display = 'none';
+            document.getElementById('takeTestBtn').style.display = 'none';
+            document.getElementById('submitActivityBtn').style.display = 'none';
+            document.getElementById('nextVideoBtn').style.display = 'none';
+
+            switch (videoWorkflowState) {
+                case 'watching':
+                    // Mark as done button will be shown after 30 seconds
+                    break;
+                case 'done':
+                    document.getElementById('takeTestBtn').style.display = 'inline-block';
+                    break;
+                case 'test_taken':
+                    document.getElementById('submitActivityBtn').style.display = 'inline-block';
+                    break;
+                case 'activity_submitted':
+                    // Show waiting message or status
+                    break;
+                case 'completed':
+                    document.getElementById('nextVideoBtn').style.display = 'inline-block';
+                    break;
+            }
+        }
+
+        // Mark video as done
+        async function markVideoAsDone() {
+            if (!currentVideoId) return;
+
+            try {
+                const response = await fetch(`/api/videos/${currentVideoId}/complete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    videoWorkflowState = 'done';
+                    updateVideoButtons();
+                    renderVideosList();
+
+                    // Check if adaptive test should be triggered
+                    console.log('Checking adaptive test result:', result.adaptiveTest);
+                    if (result.adaptiveTest && result.adaptiveTest.shouldTrigger) {
+                        console.log('Dispatching videoCompleted event for adaptive test');
+                        // Dispatch custom event for adaptive learning system
+                        const event = new CustomEvent('videoCompleted', {
+                            detail: {
+                                videoId: currentVideoId,
+                                adaptiveTest: result.adaptiveTest
+                            }
+                        });
+                        document.dispatchEvent(event);
+
+                        showNotificationModal('Video completed! An adaptive assessment is available.', 'success');
+                    } else {
+                        showNotificationModal('Video marked as done! Now take the test.', 'success');
+                    }
+                } else {
+                    showNotificationModal('Failed to mark video as done', 'error');
+                }
+            } catch (error) {
+                console.error('Error marking video as done:', error);
+                showNotificationModal('Error marking video as done', 'error');
+            }
+        }
+
+        // Take test function
+        async function takeTest() {
+            console.log('takeTest function called');
+            const videoId = currentVideoId || lastPlayedVideoId;
+            console.log('Video ID for test:', videoId);
+            if (!videoId) {
+                showNotificationModal('Please play a video first before taking the test', 'warning');
+                return;
+            }
+
+            try {
+                // First check if adaptive test should be triggered
+                const adaptiveResponse = await fetch(`/api/adaptive/should-trigger/${videoId}`);
+                if (adaptiveResponse.ok) {
+                    const adaptiveCheck = await adaptiveResponse.json();
+                    if (adaptiveCheck.shouldTrigger) {
+                        // Trigger adaptive learning system
+                        if (window.adaptiveLearning) {
+                            window.adaptiveLearning.handleVideoCompletion({
+                                adaptiveTest: {
+                                    shouldTrigger: true,
+                                    videoId: videoId
+                                }
+                            });
+                            return;
+                        }
+                    }
+                }
+
+                // Fall back to traditional test
+                const response = await fetch(`/api/tests/video/${videoId}`);
+                if (!response.ok) {
+                    showNotificationModal('No test available for this video', 'warning');
+                    return;
+                }
+
+                const test = await response.json();
+                currentVideoTest = test;
+
+                // Load test content into modal
+                const testContent = document.getElementById('testContent');
+                testContent.innerHTML = `
+                    <div class="test-container">
+                        <h4>${test.title}</h4>
+                        <p>${test.description}</p>
+                        <form id="testForm">
+                            ${test.questions.map((question, index) => `
+                                <div class="question-block" style="margin-bottom: 1.5rem; padding: 1rem; border: 1px solid #ddd; border-radius: 5px;">
+                                    <h5>Question ${index + 1}: ${question.question}</h5>
+                                    <div class="options">
+                                        <label style="display: block; margin: 0.5rem 0;">
+                                            <input type="radio" name="question_${question.id}" value="A" required>
+                                            A) ${question.option_a}
+                                        </label>
+                                        <label style="display: block; margin: 0.5rem 0;">
+                                            <input type="radio" name="question_${question.id}" value="B" required>
+                                            B) ${question.option_b}
+                                        </label>
+                                        <label style="display: block; margin: 0.5rem 0;">
+                                            <input type="radio" name="question_${question.id}" value="C" required>
+                                            C) ${question.option_c}
+                                        </label>
+                                        <label style="display: block; margin: 0.5rem 0;">
+                                            <input type="radio" name="question_${question.id}" value="D" required>
+                                            D) ${question.option_d}
+                                        </label>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            <div style="text-align: center; margin-top: 2rem;">
+                                <button type="submit" class="btn btn-primary">Submit Test</button>
+                                <button type="button" class="btn btn-secondary" onclick="closeTestModal()">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                `;
+
+                // Add form submit handler
+                document.getElementById('testForm').addEventListener('submit', submitTest);
+
+                // Show modal
+                document.getElementById('testModal').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading test:', error);
+                showNotificationModal('Error loading test', 'error');
+            }
+        }
+
+        // Submit test function
+        async function submitTest(event) {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const answers = {};
+
+            // Collect answers
+            currentVideoTest.questions.forEach(question => {
+                const answer = formData.get(`question_${question.id}`);
+                if (answer !== null) {
+                    answers[question.id] = answer;
+                }
+            });
+
+            try {
+                const response = await fetch('/api/tests/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        testId: currentVideoTest.id,
+                        videoId: currentVideoId,
+                        answers: answers
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    currentTestResult = result;
+                    videoWorkflowState = 'test_taken';
+
+                    closeTestModal();
+                    updateVideoButtons();
+
+                    showNotificationModal(`Test completed! Score: ${result.score}/${result.total_questions}. You can now submit the activity.`, 'success');
+                } else {
+                    showNotificationModal('Failed to submit test', 'error');
+                }
+            } catch (error) {
+                console.error('Error submitting test:', error);
+                showNotificationModal('Error submitting test', 'error');
+            }
+        }
+
+        // Submit activity function
+        async function submitActivity() {
+            if (!currentVideoId) return;
+
+            try {
+                // Get current video info
+                const currentVideo = courseVideos.find(v => v.id === currentVideoId);
+                if (!currentVideo) {
+                    showNotificationModal('Video not found', 'error');
+                    return;
+                }
+
+                // Fetch activity details from server
+                const activityResponse = await fetch(`/api/activities/video/${currentVideoId}`);
+                let activityData = null;
+
+                if (activityResponse.ok) {
+                    activityData = await activityResponse.json();
+                }
+
+                // Load activity content into modal
+                const activityContent = document.getElementById('activityContent');
+
+                if (activityData) {
+                    // Display actual activity title and description
+                    activityContent.innerHTML = `
+                        <div class="activity-container">
+                            <h4>Activity for: ${currentVideo.title}</h4>
+                            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                                <h5 style="color: #495057; margin-bottom: 1rem;">Activity: ${activityData.title}</h5>
+                                <p style="color: #6c757d; line-height: 1.6; margin-bottom: 0;">${activityData.description || `Complete the activity for video ${currentVideo.sequence}: ${currentVideo.title}`}</p>
+                            </div>
+                            <form id="activityForm" enctype="multipart/form-data">
+                                <div class="form-group" style="margin-bottom: 1rem;">
+                                    <label for="activityText">Your Response:</label>
+                                    <textarea id="activityText" name="text" class="form-control" rows="5" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 1rem;">
+                                    <label for="activityFile">Upload File (optional):</label>
+                                    <input type="file" id="activityFile" name="file" class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                                </div>
+                                <div style="text-align: center; margin-top: 2rem;">
+                                    <button type="submit" class="btn btn-primary">Submit Activity</button>
+                                    <button type="button" class="btn btn-secondary" onclick="closeActivityModal()">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    `;
+                } else {
+                    // Fallback if no activity found
+                    activityContent.innerHTML = `
+                        <div class="activity-container">
+                            <h4>Activity for: ${currentVideo.title}</h4>
+                            <p>Complete the activity for video ${currentVideo.sequence}: ${currentVideo.title}</p>
+                            <form id="activityForm" enctype="multipart/form-data">
+                                <div class="form-group" style="margin-bottom: 1rem;">
+                                    <label for="activityText">Your Response:</label>
+                                    <textarea id="activityText" name="text" class="form-control" rows="5" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 1rem;">
+                                    <label for="activityFile">Upload File (optional):</label>
+                                    <input type="file" id="activityFile" name="file" class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                                </div>
+                                <div style="text-align: center; margin-top: 2rem;">
+                                    <button type="submit" class="btn btn-primary">Submit Activity</button>
+                                    <button type="button" class="btn btn-secondary" onclick="closeActivityModal()">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    `;
+                }
+
+                // Add form submit handler
+                document.getElementById('activityForm').addEventListener('submit', (e) => submitActivityForm(e, currentVideoId));
+
+                // Show modal
+                document.getElementById('activityModal').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading activity:', error);
+                showNotificationModal('Error loading activity', 'error');
+            }
+        }
+
+        // Submit activity form
+        async function submitActivityForm(event, videoId) {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const textContent = formData.get('text');
+
+            try {
+                const response = await fetch('/api/activities/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        video_id: videoId,
+                        content: textContent
+                    })
+                });
+
+                if (response.ok) {
+                    videoWorkflowState = 'activity_submitted';
+                    closeActivityModal();
+                    updateVideoButtons();
+                    showNotificationModal('Activity submitted successfully! Waiting for trainer approval.', 'success');
+                } else {
+                    const errorData = await response.json();
+                    showNotificationModal('Failed to submit activity: ' + (errorData.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error submitting activity:', error);
+                showNotificationModal('Error submitting activity', 'error');
+            }
+        }
+
+        // Modal functions
+        function closeTestModal() {
+            document.getElementById('testModal').style.display = 'none';
+        }
+
+        function closeActivityModal() {
+            document.getElementById('activityModal').style.display = 'none';
+        }
+
+        // Show next video button
+        function showNextVideoButton() {
+            const currentVideo = courseVideos.find(v => v.id === currentVideoId);
+            if (!currentVideo) return;
+
+            const currentIndex = courseVideoIndexMap.get(currentVideoId);
+            if (currentIndex === undefined) return;
+            const nextVideo = courseVideos[currentIndex + 1];
+
+            if (nextVideo) {
+                document.getElementById('nextVideoBtn').style.display = 'inline-block';
+            }
+        }
+
+        // Play next video
+        function playNextVideo() {
+            const currentIndex = courseVideoIndexMap.get(currentVideoId);
+            if (currentIndex === undefined) return;
+            const nextVideo = courseVideos[currentIndex + 1];
+
+            if (nextVideo) {
+                playVideo(nextVideo.id);
+            }
+        }
+
+        // Close video player
+        function closeVideoPlayer() {
+            document.getElementById('videoPlayerSection').style.display = 'none';
+            document.getElementById('videoPlayer').src = '';
+            // Don't reset currentVideoId to null - keep it for test functionality
+            // currentVideoId = null;
+            videoStartTime = null;
+        }
+
+        // Ask AI Question
+        async function askAIQuestion() {
+            const questionInput = document.getElementById('aiQuestionInput');
+            const question = questionInput.value.trim();
+
+            if (!question) {
+                LMSUtils.showNotification('Please enter a question', 'error');
+                return;
+            }
+
+            if (!currentVideoId) {
+                LMSUtils.showNotification('No video is currently playing', 'error');
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('aiLoadingSection').style.display = 'block';
+            document.getElementById('aiResponseSection').style.display = 'none';
+            document.getElementById('askAIBtn').disabled = true;
+            document.getElementById('askAIBtn').textContent = 'Asking...';
+
+            try {
+                const response = await fetch(`/api/videos/${currentVideoId}/ask-ai`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ question })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Show AI response
+                    document.getElementById('aiResponse').textContent = data.answer;
+                    document.getElementById('aiResponseSection').style.display = 'block';
+
+                    // Clear the input
+                    questionInput.value = '';
+
+                    LMSUtils.showNotification('AI answered your question!', 'success');
+                } else {
+                    const errorData = await response.json();
+                    LMSUtils.showNotification('Failed to get AI response: ' + (errorData.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error asking AI:', error);
+                LMSUtils.showNotification('Error connecting to AI service', 'error');
+            } finally {
+                // Hide loading state
+                document.getElementById('aiLoadingSection').style.display = 'none';
+                document.getElementById('askAIBtn').disabled = false;
+                document.getElementById('askAIBtn').textContent = 'Ask AI';
+            }
+        }
+
+        // Notification Modal System
+        function createNotificationModal() {
+            const modalHTML = `
+                <div id="notificationModal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 id="notificationTitle">Notification</h3>
+                            <button class="close" onclick="closeNotificationModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <p id="notificationMessage"></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-primary" onclick="closeNotificationModal()">OK</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add modal to body if it doesn't exist
+            if (!document.getElementById('notificationModal')) {
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+            }
+        }
+
+        // Show notification modal
+        function showNotificationModal(message, type = 'info') {
+            createNotificationModal();
+
+            const modal = document.getElementById('notificationModal');
+            const title = document.getElementById('notificationTitle');
+            const messageEl = document.getElementById('notificationMessage');
+
+            // Set title based on type
+            const titles = {
+                'success': '✅ Success',
+                'error': '❌ Error',
+                'warning': '⚠️ Warning',
+                'info': 'ℹ️ Information'
+            };
+
+            title.textContent = titles[type] || titles['info'];
+            messageEl.textContent = message;
+
+            modal.style.display = 'flex';
+        }
+
+        // Close notification modal
+        function closeNotificationModal() {
+            const modal = document.getElementById('notificationModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Initialize page when DOM loads
+        document.addEventListener('DOMContentLoaded', initCoursesPage);
+    </script>
+
+    <!-- Adaptive Learning System -->
+    <script src="../js/adaptive-learning.js"></script>
+</body>
+
+</html>

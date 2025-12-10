@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activities Review - AHL Training Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>AHL Training</h2>
+            <ul class="nav-menu">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="students.html">My Students</a></li>
+                <li><a href="activities.html" class="active">Activities Review</a></li>
+                <li><a href="#" class="logout-btn">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <main class="main-content">
+            <header class="header">
+                <h1>Activities Review</h1>
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <button class="logout-btn">Logout</button>
+                </div>
+            </header>
+            
+            <!-- Activities Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalSubmissions">0</div>
+                    <div class="stat-label">Total Submissions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pendingReviews">0</div>
+                    <div class="stat-label">Pending Reviews</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="approvedToday">0</div>
+                    <div class="stat-label">Approved Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="rejectedToday">0</div>
+                    <div class="stat-label">Rejected Today</div>
+                </div>
+            </div>
+            
+            <!-- Filters and Search -->
+            <div class="card">
+                <div class="flex justify-between align-center mb-1">
+                    <h3>Activity Submissions</h3>
+                    <div class="flex gap-1">
+                        <input type="text" id="searchActivities" placeholder="Search by student or activity..." 
+                               style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                        <select id="statusFilter" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                            <option value="all">All Statuses</option>
+                            <option value="pending">Pending Review</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                        <select id="dateFilter" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                            <option value="all">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="flex gap-1 mb-1">
+                    <button class="btn btn-success" onclick="bulkApprove()" id="bulkApproveBtn" disabled>
+                        ✓ Bulk Approve Selected
+                    </button>
+                    <button class="btn btn-danger" onclick="bulkReject()" id="bulkRejectBtn" disabled>
+                        ✗ Bulk Reject Selected
+                    </button>
+                    <button class="btn btn-secondary" onclick="selectAllPending()">
+                        Select All Pending
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearSelection()">
+                        Clear Selection
+                    </button>
+                </div>
+                
+                <!-- Activities Table -->
+                <div class="table-container">
+                    <table id="activitiesTable" class="table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                                </th>
+                                <th>Student</th>
+                                <th>Activity</th>
+                                <th>Submission</th>
+                                <th>Submitted</th>
+                                <th>Status</th>
+                                <th>Reviewed</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activitiesTableBody">
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 2rem;">Loading activities...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Activity Review Modal -->
+    <div id="activityReviewModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 2% auto; padding: 2rem; width: 95%; max-width: 800px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
+            <div class="flex justify-between align-center mb-1">
+                <h3 id="reviewModalTitle">Review Activity Submission</h3>
+                <button class="btn btn-secondary" onclick="closeReviewModal()">×</button>
+            </div>
+            
+            <div id="reviewModalContent">
+                <!-- Review content will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bulk Review Modal -->
+    <div id="bulkReviewModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 10% auto; padding: 2rem; width: 90%; max-width: 500px; border-radius: 10px;">
+            <div class="flex justify-between align-center mb-1">
+                <h3 id="bulkModalTitle">Bulk Review</h3>
+                <button class="btn btn-secondary" onclick="closeBulkReviewModal()">×</button>
+            </div>
+            
+            <form id="bulkReviewForm">
+                <input type="hidden" id="bulkAction">
+                <input type="hidden" id="bulkSubmissionIds">
+                
+                <div class="form-group">
+                    <label for="bulkFeedback">Feedback for all selected submissions:</label>
+                    <textarea id="bulkFeedback" rows="4" 
+                              placeholder="Enter feedback that will be applied to all selected submissions..." 
+                              required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-family: inherit;"></textarea>
+                </div>
+                
+                <div class="flex gap-1 mt-2">
+                    <button type="submit" class="btn btn-primary">Confirm Bulk Action</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeBulkReviewModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="../js/main.js"></script>
+    <script>
+        let currentUser = null;
+        let myStudents = [];
+        let allSubmissions = [];
+        let filteredSubmissions = [];
+        let selectedSubmissions = new Set();
+        
+        // Initialize trainer activities page
+        async function initTrainerActivities() {
+            try {
+                currentUser = await LMSUtils.getCurrentUser();
+                
+                if (currentUser.role !== 'trainer') {
+                    window.location.href = '/';
+                    return;
+                }
+                
+                document.getElementById('userName').textContent = currentUser.name;
+                
+                await loadActivitiesData();
+                setupEventListeners();
+                updateActivitiesDisplay();
+                
+            } catch (error) {
+                console.error('Trainer activities page initialization failed:', error);
+                window.location.href = '/';
+            }
+        }
+        
+        // Load activities data
+        async function loadActivitiesData() {
+            try {
+                // Get students for this trainer's course
+                myStudents = await LMSUtils.apiCall('/students');
+                
+                // Get all submissions for my students
+                const allSubmissionsData = await LMSUtils.apiCall('/submissions');
+                const myStudentIds = myStudents.map(s => s.id);
+                allSubmissions = allSubmissionsData.filter(submission => 
+                    myStudentIds.includes(submission.user_id)
+                );
+                
+                // Sort by submission date (newest first)
+                allSubmissions.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+                
+                filteredSubmissions = [...allSubmissions];
+                
+            } catch (error) {
+                console.error('Failed to load activities data:', error);
+                LMSUtils.showNotification('Failed to load activities data', 'error');
+            }
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('searchActivities').addEventListener('input', filterActivities);
+            document.getElementById('statusFilter').addEventListener('change', filterActivities);
+            document.getElementById('dateFilter').addEventListener('change', filterActivities);
+            document.getElementById('bulkReviewForm').addEventListener('submit', handleBulkReview);
+        }
+        
+        // Update activities display
+        function updateActivitiesDisplay() {
+            updateStatistics();
+            renderActivitiesTable();
+            updateBulkActionButtons();
+        }
+        
+        // Update statistics
+        function updateStatistics() {
+            const totalSubmissions = allSubmissions.length;
+            const pendingReviews = allSubmissions.filter(s => s.status === 'pending').length;
+            
+            // Count reviews completed today
+            const today = new Date().toDateString();
+            const approvedToday = allSubmissions.filter(s => {
+                const reviewDate = s.reviewed_at ? new Date(s.reviewed_at).toDateString() : null;
+                return reviewDate === today && s.status === 'approved';
+            }).length;
+            
+            const rejectedToday = allSubmissions.filter(s => {
+                const reviewDate = s.reviewed_at ? new Date(s.reviewed_at).toDateString() : null;
+                return reviewDate === today && s.status === 'rejected';
+            }).length;
+            
+            document.getElementById('totalSubmissions').textContent = totalSubmissions;
+            document.getElementById('pendingReviews').textContent = pendingReviews;
+            document.getElementById('approvedToday').textContent = approvedToday;
+            document.getElementById('rejectedToday').textContent = rejectedToday;
+        }
+        
+        // Filter activities
+        function filterActivities() {
+            const searchTerm = document.getElementById('searchActivities').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            
+            filteredSubmissions = allSubmissions.filter(submission => {
+                const student = myStudents.find(s => s.id === submission.user_id);
+                const studentName = student ? student.name.toLowerCase() : '';
+                const activityTitle = (submission.activity_title || '').toLowerCase();
+                const submissionText = (submission.content || submission.submission_text || '').toLowerCase();
+                
+                // Search filter
+                const matchesSearch = studentName.includes(searchTerm) ||
+                                    activityTitle.includes(searchTerm) ||
+                                    submissionText.includes(searchTerm);
+                
+                if (!matchesSearch) return false;
+                
+                // Status filter
+                if (statusFilter !== 'all' && submission.status !== statusFilter) {
+                    return false;
+                }
+                
+                // Date filter
+                if (dateFilter !== 'all') {
+                    const submissionDate = new Date(submission.submitted_at);
+                    const now = new Date();
+                    
+                    switch (dateFilter) {
+                        case 'today':
+                            if (submissionDate.toDateString() !== now.toDateString()) return false;
+                            break;
+                        case 'week':
+                            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                            if (submissionDate < weekAgo) return false;
+                            break;
+                        case 'month':
+                            const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+                            if (submissionDate < monthAgo) return false;
+                            break;
+                    }
+                }
+                
+                return true;
+            });
+            
+            // Clear selection when filtering
+            selectedSubmissions.clear();
+            document.getElementById('selectAllCheckbox').checked = false;
+            
+            renderActivitiesTable();
+            updateBulkActionButtons();
+        }
+        
+        // Render activities table
+        function renderActivitiesTable() {
+            const tbody = document.getElementById('activitiesTableBody');
+            
+            if (filteredSubmissions.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 2rem; color: #666;">
+                            ${allSubmissions.length === 0 ? 'No activity submissions yet.' : 'No submissions match your search criteria.'}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            const activitiesHTML = filteredSubmissions.map(submission => {
+                const student = myStudents.find(s => s.id === submission.user_id);
+                const studentName = student ? student.name : 'Unknown Student';
+                
+                const submissionPreview = (submission.content || submission.submission_text) ?
+                (submission.content || submission.submission_text).substring(0, 100) + ((submission.content || submission.submission_text).length > 100 ? '...' : '') :
+                'No text submission';
+                
+                const daysAgo = Math.floor((Date.now() - new Date(submission.submitted_at)) / (1000 * 60 * 60 * 24));
+                const submittedText = daysAgo === 0 ? 'Today' : `${daysAgo} day${daysAgo > 1 ? 's' : ''} ago`;
+                
+                const reviewedText = submission.reviewed_at ? 
+                    (() => {
+                        const reviewDays = Math.floor((Date.now() - new Date(submission.reviewed_at)) / (1000 * 60 * 60 * 24));
+                        return reviewDays === 0 ? 'Today' : `${reviewDays} day${reviewDays > 1 ? 's' : ''} ago`;
+                    })() : '-';
+                
+                return `
+                    <tr class="${selectedSubmissions.has(submission.id) ? 'selected-row' : ''}" style="${selectedSubmissions.has(submission.id) ? 'background-color: #e3f2fd;' : ''}">
+                        <td>
+                            <input type="checkbox" 
+                                   ${submission.status === 'pending' ? '' : 'disabled'}
+                                   ${selectedSubmissions.has(submission.id) ? 'checked' : ''}
+                                   onchange="toggleSubmissionSelection(${submission.id})">
+                        </td>
+                        <td>
+                            <div style="font-weight: 500;">${studentName}</div>
+                            <div style="font-size: 0.85rem; color: #666;">${student ? student.email : ''}</div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 500;">${submission.activity_title || 'Activity Submission'}</div>
+                            ${submission.file_path ? '<div style="font-size: 0.85rem; color: #007bff;">📎 File attached</div>' : ''}
+                        </td>
+                        <td>
+                            <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${submission.content || submission.submission_text || 'No text submission'}">
+                                ${submissionPreview}
+                            </div>
+                        </td>
+                        <td style="font-size: 0.9rem; color: #666;">${submittedText}</td>
+                        <td>
+                            <span class="status-badge status-${submission.status}">${submission.status}</span>
+                        </td>
+                        <td style="font-size: 0.9rem; color: #666;">${reviewedText}</td>
+                        <td>
+                            <div class="flex gap-05">
+                                <button class="btn btn-secondary btn-sm" onclick="reviewSubmission(${submission.id})" title="Review">
+                                    👁️
+                                </button>
+                                ${submission.status === 'pending' ? `
+                                    <button class="btn btn-success btn-sm" onclick="quickApprove(${submission.id})" title="Quick Approve">
+                                        ✓
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" onclick="quickReject(${submission.id})" title="Quick Reject">
+                                        ✗
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            tbody.innerHTML = activitiesHTML;
+        }
+        
+        // Toggle submission selection
+        function toggleSubmissionSelection(submissionId) {
+            if (selectedSubmissions.has(submissionId)) {
+                selectedSubmissions.delete(submissionId);
+            } else {
+                selectedSubmissions.add(submissionId);
+            }
+            
+            renderActivitiesTable();
+            updateBulkActionButtons();
+            updateSelectAllCheckbox();
+        }
+        
+        // Toggle select all
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const pendingSubmissions = filteredSubmissions.filter(s => s.status === 'pending');
+            
+            if (selectAllCheckbox.checked) {
+                pendingSubmissions.forEach(s => selectedSubmissions.add(s.id));
+            } else {
+                pendingSubmissions.forEach(s => selectedSubmissions.delete(s.id));
+            }
+            
+            renderActivitiesTable();
+            updateBulkActionButtons();
+        }
+        
+        // Select all pending
+        function selectAllPending() {
+            const pendingSubmissions = filteredSubmissions.filter(s => s.status === 'pending');
+            pendingSubmissions.forEach(s => selectedSubmissions.add(s.id));
+            
+            renderActivitiesTable();
+            updateBulkActionButtons();
+            updateSelectAllCheckbox();
+        }
+        
+        // Clear selection
+        function clearSelection() {
+            selectedSubmissions.clear();
+            document.getElementById('selectAllCheckbox').checked = false;
+            
+            renderActivitiesTable();
+            updateBulkActionButtons();
+        }
+        
+        // Update select all checkbox
+        function updateSelectAllCheckbox() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const pendingSubmissions = filteredSubmissions.filter(s => s.status === 'pending');
+            const selectedPending = pendingSubmissions.filter(s => selectedSubmissions.has(s.id));
+            
+            if (selectedPending.length === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else if (selectedPending.length === pendingSubmissions.length) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            }
+        }
+        
+        // Update bulk action buttons
+        function updateBulkActionButtons() {
+            const hasSelection = selectedSubmissions.size > 0;
+            document.getElementById('bulkApproveBtn').disabled = !hasSelection;
+            document.getElementById('bulkRejectBtn').disabled = !hasSelection;
+        }
+        
+        // Review submission
+        function reviewSubmission(submissionId) {
+            const submission = allSubmissions.find(s => s.id === submissionId);
+            if (!submission) return;
+            
+            const student = myStudents.find(s => s.id === submission.user_id);
+            showReviewModal(submission, student);
+        }
+        
+        // Show review modal
+        function showReviewModal(submission, student) {
+            const modalTitle = document.getElementById('reviewModalTitle');
+            const modalContent = document.getElementById('reviewModalContent');
+            
+            modalTitle.textContent = `Review: ${student ? student.name : 'Unknown Student'}'s Activity`;
+            
+            modalContent.innerHTML = `
+                <div class="review-content">
+                    <!-- Submission Info -->
+                    <div class="submission-info" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                        <h4>Submission Details</h4>
+                        <div class="info-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                            <div>
+                                <strong>Student:</strong><br>
+                                <span>${student ? student.name : 'Unknown Student'}</span>
+                            </div>
+                            <div>
+                                <strong>Email:</strong><br>
+                                <span>${student ? student.email : 'Unknown'}</span>
+                            </div>
+                            <div>
+                                <strong>Submitted:</strong><br>
+                                <span>${LMSUtils.formatDate(submission.submitted_at)}</span>
+                            </div>
+                            <div>
+                                <strong>Status:</strong><br>
+                                <span class="status-badge status-${submission.status}">${submission.status}</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <strong>Activity:</strong><br>
+                            <span>${submission.activity_title || 'Activity Submission'}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Submission Content -->
+                    <div class="submission-content" style="background: white; border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                        <h4>Student's Submission</h4>
+                        <div class="submission-text" style="white-space: pre-wrap; line-height: 1.6; max-height: 300px; overflow-y: auto; margin-top: 1rem; padding: 1rem; background: #f9f9f9; border-radius: 5px;">
+                            ${submission.content || submission.submission_text || 'No text submission provided.'}
+                        </div>
+                        ${submission.file_path ? `
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                                <strong>Attached File:</strong> 
+                                <a href="${submission.file_path}" target="_blank" class="btn btn-secondary" style="margin-left: 0.5rem; padding: 0.5rem 1rem;">
+                                    📎 View File
+                                </a>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <!-- Current Feedback (if any) -->
+                    ${submission.feedback ? `
+                        <div class="current-feedback" style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                            <h4>Current Feedback</h4>
+                            <p style="margin: 0.5rem 0 0 0;">${submission.feedback}</p>
+                            ${submission.reviewed_at ? `<small style="color: #666;">Reviewed: ${LMSUtils.formatDate(submission.reviewed_at)}</small>` : ''}
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Review Form -->
+                    ${submission.status === 'pending' ? `
+                        <form id="singleReviewForm">
+                            <input type="hidden" id="singleSubmissionId" value="${submission.id}">
+                            
+                            <div class="form-group">
+                                <label for="singleReviewDecision">Decision:</label>
+                                <select id="singleReviewDecision" name="decision" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px;">
+                                    <option value="">Select Decision</option>
+                                    <option value="approve">✅ Approve</option>
+                                    <option value="reject">❌ Reject</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="singleReviewFeedback">Feedback for Student:</label>
+                                <textarea id="singleReviewFeedback" name="feedback" rows="4" 
+                                          placeholder="Provide detailed feedback for the student..." 
+                                          required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-family: inherit;"></textarea>
+                            </div>
+                            
+                            <div class="flex gap-1 mt-2">
+                                <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem;">
+                                    Submit Review
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="closeReviewModal()" style="padding: 0.75rem 2rem;">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    ` : `
+                        <div class="alert alert-info">
+                            <p>This submission has already been reviewed and cannot be modified.</p>
+                            <button class="btn btn-secondary" onclick="closeReviewModal()" style="margin-top: 1rem;">
+                                Close
+                            </button>
+                        </div>
+                    `}
+                </div>
+            `;
+            
+            // Setup form submission if pending
+            if (submission.status === 'pending') {
+                document.getElementById('singleReviewForm').addEventListener('submit', handleSingleReview);
+            }
+            
+            document.getElementById('activityReviewModal').style.display = 'block';
+        }
+        
+        // Handle single review
+        async function handleSingleReview(e) {
+            e.preventDefault();
+            
+            const submissionId = document.getElementById('singleSubmissionId').value;
+            const decision = document.getElementById('singleReviewDecision').value;
+            const feedback = document.getElementById('singleReviewFeedback').value;
+            
+            if (!decision || !feedback.trim()) {
+                LMSUtils.showNotification('Please select a decision and provide feedback', 'error');
+                return;
+            }
+            
+            await processReview(submissionId, decision, feedback);
+        }
+        
+        // Quick approve
+        async function quickApprove(submissionId) {
+            const submission = allSubmissions.find(s => s.id === submissionId);
+            const student = myStudents.find(s => s.id === submission.user_id);
+            
+            if (confirm(`Are you sure you want to approve ${student ? student.name : 'this student'}'s activity submission?`)) {
+                await processReview(submissionId, 'approve', 'Good work! Your submission has been approved.');
+            }
+        }
+        
+        // Quick reject
+        async function quickReject(submissionId) {
+            const submission = allSubmissions.find(s => s.id === submissionId);
+            const student = myStudents.find(s => s.id === submission.user_id);
+            
+            if (confirm(`Are you sure you want to reject ${student ? student.name : 'this student'}'s activity submission?`)) {
+                await processReview(submissionId, 'reject', 'Please review your submission and try again.');
+            }
+        }
+        
+        // Bulk approve
+        function bulkApprove() {
+            if (selectedSubmissions.size === 0) return;
+            
+            document.getElementById('bulkAction').value = 'approve';
+            document.getElementById('bulkSubmissionIds').value = Array.from(selectedSubmissions).join(',');
+            document.getElementById('bulkModalTitle').textContent = `Bulk Approve ${selectedSubmissions.size} Submissions`;
+            document.getElementById('bulkFeedback').value = 'Good work! Your submissions have been approved.';
+            
+            document.getElementById('bulkReviewModal').style.display = 'block';
+        }
+        
+        // Bulk reject
+        function bulkReject() {
+            if (selectedSubmissions.size === 0) return;
+            
+            document.getElementById('bulkAction').value = 'reject';
+            document.getElementById('bulkSubmissionIds').value = Array.from(selectedSubmissions).join(',');
+            document.getElementById('bulkModalTitle').textContent = `Bulk Reject ${selectedSubmissions.size} Submissions`;
+            document.getElementById('bulkFeedback').value = 'Please review your submissions and resubmit with improvements.';
+            
+            document.getElementById('bulkReviewModal').style.display = 'block';
+        }
+        
+        // Handle bulk review
+        async function handleBulkReview(e) {
+            e.preventDefault();
+            
+            const action = document.getElementById('bulkAction').value;
+            const submissionIds = document.getElementById('bulkSubmissionIds').value.split(',').map(id => parseInt(id));
+            const feedback = document.getElementById('bulkFeedback').value;
+            
+            if (!feedback.trim()) {
+                LMSUtils.showNotification('Please provide feedback', 'error');
+                return;
+            }
+            
+            try {
+                // Process each submission
+                for (const submissionId of submissionIds) {
+                    await processReview(submissionId, action, feedback, false); // Don't show individual notifications
+                }
+                
+                LMSUtils.showNotification(`Successfully ${action}d ${submissionIds.length} submissions!`, 'success');
+                closeBulkReviewModal();
+                clearSelection();
+                
+            } catch (error) {
+                console.error('Bulk review failed:', error);
+                LMSUtils.showNotification('Some submissions failed to process', 'error');
+            }
+        }
+        
+        // Process review (single function for all review actions)
+        async function processReview(submissionId, decision, feedback, showNotification = true) {
+            try {
+                await LMSUtils.apiCall(`/activities/${submissionId}/approve`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ 
+                        status: decision === 'approve' ? 'approved' : 'rejected',
+                        feedback: feedback 
+                    })
+                });
+                
+                if (showNotification) {
+                    LMSUtils.showNotification(`Activity ${decision}d successfully!`, 'success');
+                }
+                
+                // Update local data
+                const submission = allSubmissions.find(s => s.id === submissionId);
+                if (submission) {
+                    submission.status = decision === 'approve' ? 'approved' : 'rejected';
+                    submission.feedback = feedback;
+                    submission.reviewed_at = new Date().toISOString();
+                }
+                
+                // Close modal if open
+                closeReviewModal();
+                
+                // Refresh display
+                updateActivitiesDisplay();
+                
+            } catch (error) {
+                console.error(`Failed to ${decision} submission:`, error);
+                if (showNotification) {
+                    LMSUtils.showNotification(`Failed to ${decision} activity`, 'error');
+                }
+                throw error;
+            }
+        }
+        
+        // Close review modal
+        function closeReviewModal() {
+            document.getElementById('activityReviewModal').style.display = 'none';
+            document.getElementById('reviewModalContent').innerHTML = '';
+        }
+        
+        // Close bulk review modal
+        function closeBulkReviewModal() {
+            document.getElementById('bulkReviewModal').style.display = 'none';
+            document.getElementById('bulkReviewForm').reset();
+        }
+        
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target.id === 'activityReviewModal') {
+                closeReviewModal();
+            }
+            if (e.target.id === 'bulkReviewModal') {
+                closeBulkReviewModal();
+            }
+        });
+        
+        // Initialize page when DOM loads
+        document.addEventListener('DOMContentLoaded', initTrainerActivities);
+    </script>
+</body>
+</html>

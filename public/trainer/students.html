@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Students - AHL Training Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>AHL Training</h2>
+            <ul class="nav-menu">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="students.html" class="active">My Students</a></li>
+                <li><a href="activities.html">Activities Review</a></li>
+                <li><a href="#" class="logout-btn">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <main class="main-content">
+            <header class="header">
+                <h1>My Students</h1>
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <button class="logout-btn">Logout</button>
+                </div>
+            </header>
+            
+            <!-- Students Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalStudents">0</div>
+                    <div class="stat-label">Total Students</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="activeStudents">0</div>
+                    <div class="stat-label">Active Students</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="completedStudents">0</div>
+                    <div class="stat-label">Completed Course</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="averageProgress">0%</div>
+                    <div class="stat-label">Average Progress</div>
+                </div>
+            </div>
+            
+            <!-- Filters and Search -->
+            <div class="card">
+                <div class="flex justify-between align-center mb-1">
+                    <h3>Student Management</h3>
+                    <div class="flex gap-1">
+                        <input type="text" id="searchStudents" placeholder="Search students..." 
+                               style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                        <select id="progressFilter" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                            <option value="all">All Progress Levels</option>
+                            <option value="not-started">Not Started (0%)</option>
+                            <option value="in-progress">In Progress (1-99%)</option>
+                            <option value="completed">Completed (100%)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Students Table -->
+                <div class="table-container">
+                    <table id="studentsTable" class="table">
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Progress</th>
+                                <th>Videos Completed</th>
+                                <th>Pending Activities</th>
+                                <th>Last Activity</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody">
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 2rem;">Loading students...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Student Detail Modal -->
+    <div id="studentDetailModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 2% auto; padding: 2rem; width: 95%; max-width: 900px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
+            <div class="flex justify-between align-center mb-1">
+                <h3 id="studentDetailTitle">Student Details</h3>
+                <button class="btn btn-secondary" onclick="closeStudentDetailModal()">×</button>
+            </div>
+            
+            <div id="studentDetailContent">
+                <!-- Student detail content will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Send Message Modal -->
+    <div id="sendMessageModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 10% auto; padding: 2rem; width: 90%; max-width: 500px; border-radius: 10px;">
+            <div class="flex justify-between align-center mb-1">
+                <h3 id="messageModalTitle">Send WhatsApp Message</h3>
+                <button class="btn btn-secondary" onclick="closeSendMessageModal()">×</button>
+            </div>
+            
+            <form id="sendMessageForm">
+                <input type="hidden" id="messageStudentId">
+                
+                <div class="form-group">
+                    <label for="messageTemplate">Message Template:</label>
+                    <select id="messageTemplate" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px;">
+                        <option value="">Select a template</option>
+                        <option value="progress-check">Progress Check-in</option>
+                        <option value="encouragement">Encouragement Message</option>
+                        <option value="reminder">Activity Reminder</option>
+                        <option value="custom">Custom Message</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="messageText">Message:</label>
+                    <textarea id="messageText" rows="4" 
+                              placeholder="Type your message here..." 
+                              required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-family: inherit;"></textarea>
+                </div>
+                
+                <div class="flex gap-1 mt-2">
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeSendMessageModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="../js/main.js"></script>
+    <script>
+        let currentUser = null;
+        let myStudents = [];
+        let studentProgress = [];
+        let allSubmissions = [];
+        let filteredStudents = [];
+        
+        // Message templates
+        const messageTemplates = {
+            'progress-check': 'Hi {name}! How is your training progress going? Let me know if you need any help with the course materials.',
+            'encouragement': 'Great job on your progress, {name}! Keep up the excellent work. You\'re doing amazing!',
+            'reminder': 'Hi {name}, just a friendly reminder to complete your pending activities. Let me know if you have any questions!',
+            'custom': ''
+        };
+        
+        // Initialize trainer students page
+        async function initTrainerStudents() {
+            try {
+                currentUser = await LMSUtils.getCurrentUser();
+                if (!currentUser) {
+                    return;
+                }
+                
+                if (currentUser.role !== 'trainer') {
+                    window.location.href = '/';
+                    return;
+                }
+                
+                document.getElementById('userName').textContent = currentUser.name;
+                
+                await loadStudentsData();
+                setupEventListeners();
+                updateStudentsDisplay();
+                
+            } catch (error) {
+                console.error('Trainer students page initialization failed:', error);
+                window.location.href = '/';
+            }
+        }
+        
+        // Load students data
+        async function loadStudentsData() {
+            try {
+                // Get students for this trainer's course
+                myStudents = await LMSUtils.apiCall('/students');
+                
+                // Get all submissions
+                allSubmissions = await LMSUtils.apiCall('/submissions');
+                
+                // Get progress for each student
+                studentProgress = [];
+                for (const student of myStudents) {
+                    try {
+                        const progress = await LMSUtils.apiCall(`/progress/${student.id}`);
+                        studentProgress.push({
+                            student: student,
+                            progress: progress || []
+                        });
+                    } catch (error) {
+                        console.error(`Failed to load progress for student ${student.id}:`, error);
+                        studentProgress.push({
+                            student: student,
+                            progress: []
+                        });
+                    }
+                }
+                
+                filteredStudents = [...myStudents];
+                
+            } catch (error) {
+                console.error('Failed to load students data:', error);
+                LMSUtils.showNotification('Failed to load students data', 'error');
+            }
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('searchStudents').addEventListener('input', filterStudents);
+            document.getElementById('progressFilter').addEventListener('change', filterStudents);
+            document.getElementById('messageTemplate').addEventListener('change', updateMessageTemplate);
+            document.getElementById('sendMessageForm').addEventListener('submit', handleSendMessage);
+        }
+        
+        // Update students display
+        function updateStudentsDisplay() {
+            updateStatistics();
+            renderStudentsTable();
+        }
+        
+        // Update statistics
+        function updateStatistics() {
+            const totalStudents = myStudents.length;
+            let activeStudents = 0;
+            let completedStudents = 0;
+            let totalProgress = 0;
+            let studentsWithProgress = 0;
+            
+            studentProgress.forEach(sp => {
+                const progress = sp.progress;
+                if (progress.length > 0) {
+                    const completedVideos = progress.filter(p => p.completed).length;
+                    const totalVideos = progress.length;
+                    const progressPercent = (completedVideos / totalVideos) * 100;
+                    
+                    if (progressPercent > 0) activeStudents++;
+                    if (progressPercent === 100) completedStudents++;
+                    
+                    totalProgress += progressPercent;
+                    studentsWithProgress++;
+                }
+            });
+            
+            const averageProgress = studentsWithProgress > 0 ? Math.round(totalProgress / studentsWithProgress) : 0;
+            
+            document.getElementById('totalStudents').textContent = totalStudents;
+            document.getElementById('activeStudents').textContent = activeStudents;
+            document.getElementById('completedStudents').textContent = completedStudents;
+            document.getElementById('averageProgress').textContent = `${averageProgress}%`;
+        }
+        
+        // Filter students
+        function filterStudents() {
+            const searchTerm = document.getElementById('searchStudents').value.toLowerCase();
+            const progressFilter = document.getElementById('progressFilter').value;
+            
+            filteredStudents = myStudents.filter(student => {
+                // Search filter
+                const matchesSearch = student.name.toLowerCase().includes(searchTerm) ||
+                                    student.email.toLowerCase().includes(searchTerm) ||
+                                    (student.phone && student.phone.includes(searchTerm));
+                
+                if (!matchesSearch) return false;
+                
+                // Progress filter
+                if (progressFilter === 'all') return true;
+                
+                const sp = studentProgress.find(p => p.student.id === student.id);
+                const progress = sp ? sp.progress : [];
+                const completedVideos = progress.filter(p => p.completed).length;
+                const totalVideos = progress.length;
+                const progressPercent = totalVideos > 0 ? (completedVideos / totalVideos) * 100 : 0;
+                
+                switch (progressFilter) {
+                    case 'not-started':
+                        return progressPercent === 0;
+                    case 'in-progress':
+                        return progressPercent > 0 && progressPercent < 100;
+                    case 'completed':
+                        return progressPercent === 100;
+                    default:
+                        return true;
+                }
+            });
+            
+            renderStudentsTable();
+        }
+        
+        // Render students table
+        function renderStudentsTable() {
+            const tbody = document.getElementById('studentsTableBody');
+            
+            if (filteredStudents.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 2rem; color: #666;">
+                            ${myStudents.length === 0 ? 'No students assigned to your training role yet.' : 'No students match your search criteria.'}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            const studentsHTML = filteredStudents.map(student => {
+                const sp = studentProgress.find(p => p.student.id === student.id);
+                const progress = sp ? sp.progress : [];
+                const completedVideos = progress.filter(p => p.completed).length;
+                const totalVideos = progress.length;
+                const progressPercent = totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0;
+                
+                // Get student submissions
+                const studentSubmissions = allSubmissions.filter(s => s.user_id === student.id);
+                const pendingActivities = studentSubmissions.filter(s => s.status === 'pending').length;
+                
+                // Get last activity date
+                const lastSubmission = studentSubmissions.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))[0];
+                const lastActivity = lastSubmission ? LMSUtils.formatDate(lastSubmission.submitted_at) : 'No activity';
+                
+                // Progress bar color
+                let progressColor = '#e0e0e0';
+                if (progressPercent > 0) progressColor = '#ffc107';
+                if (progressPercent >= 50) progressColor = '#17a2b8';
+                if (progressPercent >= 80) progressColor = '#28a745';
+                if (progressPercent === 100) progressColor = '#007bff';
+                
+                return `
+                    <tr>
+                        <td>
+                            <div style="font-weight: 500;">${student.name}</div>
+                        </td>
+                        <td>${student.email}</td>
+                        <td>${student.phone || 'Not provided'}</td>
+                        <td>
+                            <div class="progress-container" style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div class="progress-bar" style="background: #e0e0e0; border-radius: 5px; height: 8px; width: 80px; position: relative;">
+                                    <div class="progress-fill" style="background: ${progressColor}; height: 100%; border-radius: 5px; width: ${progressPercent}%; transition: width 0.3s ease;"></div>
+                                </div>
+                                <span style="font-size: 0.9rem; font-weight: 500;">${progressPercent}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span style="font-weight: 500;">${completedVideos}</span>/<span style="color: #666;">${totalVideos}</span>
+                        </td>
+                        <td>
+                            ${pendingActivities > 0 ? 
+                                `<span class="status-badge status-warning">${pendingActivities} pending</span>` : 
+                                '<span style="color: #28a745;">✓ Up to date</span>'
+                            }
+                        </td>
+                        <td style="font-size: 0.9rem; color: #666;">${lastActivity}</td>
+                        <td>
+                            <div class="flex gap-05">
+                                <button class="btn btn-secondary btn-sm" onclick="viewStudentDetails(${student.id})" title="View Details">
+                                    👁️
+                                </button>
+                                <button class="btn btn-primary btn-sm" onclick="sendMessage(${student.id})" title="Send Message">
+                                    💬
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            tbody.innerHTML = studentsHTML;
+        }
+        
+        // View student details
+        function viewStudentDetails(studentId) {
+            const student = myStudents.find(s => s.id === studentId);
+            if (!student) return;
+            
+            const sp = studentProgress.find(p => p.student.id === studentId);
+            const progress = sp ? sp.progress : [];
+            const studentSubmissions = allSubmissions.filter(s => s.user_id === studentId);
+            
+            showStudentDetailModal(student, progress, studentSubmissions);
+        }
+        
+        // Show student detail modal
+        function showStudentDetailModal(student, progress, submissions) {
+            const modalTitle = document.getElementById('studentDetailTitle');
+            const modalContent = document.getElementById('studentDetailContent');
+            
+            modalTitle.textContent = `${student.name} - Detailed View`;
+            
+            const completedVideos = progress.filter(p => p.completed).length;
+            const totalVideos = progress.length;
+            const progressPercent = totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0;
+            
+            const pendingSubmissions = submissions.filter(s => s.status === 'pending');
+            const approvedSubmissions = submissions.filter(s => s.status === 'approved');
+            const rejectedSubmissions = submissions.filter(s => s.status === 'rejected');
+            
+            modalContent.innerHTML = `
+                <div class="student-detail-content">
+                    <!-- Student Info -->
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <h4>Student Information</h4>
+                        <div class="student-info-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                            <div>
+                                <strong>Name:</strong><br>
+                                <span>${student.name}</span>
+                            </div>
+                            <div>
+                                <strong>Email:</strong><br>
+                                <span>${student.email}</span>
+                            </div>
+                            <div>
+                                <strong>Phone:</strong><br>
+                                <span>${student.phone || 'Not provided'}</span>
+                            </div>
+                            <div>
+                                <strong>Course Role:</strong><br>
+                                <span>${student.course_role || 'Not assigned'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Overview -->
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <h4>Progress Overview</h4>
+                        <div class="progress-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                            <div class="stat-item" style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #007bff;">${progressPercent}%</div>
+                                <div style="color: #666;">Overall Progress</div>
+                            </div>
+                            <div class="stat-item" style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #28a745;">${completedVideos}</div>
+                                <div style="color: #666;">Videos Completed</div>
+                            </div>
+                            <div class="stat-item" style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #ffc107;">${pendingSubmissions.length}</div>
+                                <div style="color: #666;">Pending Activities</div>
+                            </div>
+                            <div class="stat-item" style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #17a2b8;">${submissions.length}</div>
+                                <div style="color: #666;">Total Submissions</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Video Progress -->
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <h4>Video Progress</h4>
+                        <div class="video-progress-list" style="margin-top: 1rem;">
+                            ${progress.length > 0 ? progress.map((p, index) => `
+                                <div class="video-progress-item" style="display: flex; align-items: center; padding: 0.75rem; border: 1px solid #eee; border-radius: 8px; margin-bottom: 0.5rem;">
+                                    <div class="video-status" style="margin-right: 1rem; font-size: 1.2rem;">
+                                        ${p.completed ? '✅' : '⏸️'}
+                                    </div>
+                                    <div class="video-info" style="flex: 1;">
+                                        <div style="font-weight: 500;">Video ${index + 1}</div>
+                                        <div style="font-size: 0.9rem; color: #666;">
+                                            ${p.completed ? 'Completed' : 'Not completed'}
+                                            ${p.completed && p.completed_at ? ` on ${LMSUtils.formatDate(p.completed_at)}` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('') : '<p style="color: #666; text-align: center; padding: 2rem;">No video progress data available.</p>'}
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Submissions -->
+                    <div class="card">
+                        <h4>Recent Activity Submissions</h4>
+                        <div class="submissions-list" style="margin-top: 1rem;">
+                            ${submissions.length > 0 ? submissions.slice(0, 10).map(submission => `
+                                <div class="submission-item" style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; border: 1px solid #eee; border-radius: 8px; margin-bottom: 0.5rem;">
+                                    <div class="submission-info" style="flex: 1;">
+                                        <div style="font-weight: 500;">${submission.activity_title || 'Activity Submission'}</div>
+                                        <div style="font-size: 0.9rem; color: #666;">
+                                            Submitted: ${LMSUtils.formatDate(submission.submitted_at)}
+                                            ${submission.reviewed_at ? ` | Reviewed: ${LMSUtils.formatDate(submission.reviewed_at)}` : ''}
+                                        </div>
+                                        ${submission.feedback ? `<div style="font-size: 0.85rem; color: #666; margin-top: 0.25rem; font-style: italic;">${submission.feedback}</div>` : ''}
+                                    </div>
+                                    <div class="submission-status">
+                                        <span class="status-badge status-${submission.status}">${submission.status}</span>
+                                    </div>
+                                </div>
+                            `).join('') : '<p style="color: #666; text-align: center; padding: 2rem;">No activity submissions yet.</p>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('studentDetailModal').style.display = 'block';
+        }
+        
+        // Send message to student
+        function sendMessage(studentId) {
+            const student = myStudents.find(s => s.id === studentId);
+            if (!student) return;
+            
+            document.getElementById('messageStudentId').value = studentId;
+            document.getElementById('messageModalTitle').textContent = `Send Message to ${student.name}`;
+            document.getElementById('messageTemplate').value = '';
+            document.getElementById('messageText').value = '';
+            
+            document.getElementById('sendMessageModal').style.display = 'block';
+        }
+        
+        // Update message template
+        function updateMessageTemplate() {
+            const template = document.getElementById('messageTemplate').value;
+            const studentId = document.getElementById('messageStudentId').value;
+            const student = myStudents.find(s => s.id == studentId);
+            
+            if (template && messageTemplates[template] && student) {
+                const message = messageTemplates[template].replace('{name}', student.name);
+                document.getElementById('messageText').value = message;
+            } else if (template === 'custom') {
+                document.getElementById('messageText').value = '';
+            }
+        }
+        
+        // Handle send message
+        async function handleSendMessage(e) {
+            e.preventDefault();
+            
+            const studentId = document.getElementById('messageStudentId').value;
+            const messageText = document.getElementById('messageText').value;
+            
+            const student = myStudents.find(s => s.id == studentId);
+            if (!student || !messageText.trim()) {
+                LMSUtils.showNotification('Please enter a message', 'error');
+                return;
+            }
+            
+            if (!student.phone) {
+                LMSUtils.showNotification('Student phone number not available', 'error');
+                return;
+            }
+            
+            try {
+                // Here you would integrate with your WhatsApp API
+                // For now, we'll just show a success message
+                LMSUtils.showNotification(`Message sent to ${student.name}!`, 'success');
+                closeSendMessageModal();
+                
+                // In a real implementation, you would call your WhatsApp API:
+                // await LMSUtils.apiCall('/send-whatsapp', {
+                //     method: 'POST',
+                //     body: JSON.stringify({
+                //         phone: student.phone,
+                //         message: messageText
+                //     })
+                // });
+                
+            } catch (error) {
+                console.error('Failed to send message:', error);
+                LMSUtils.showNotification('Failed to send message', 'error');
+            }
+        }
+        
+        // Close student detail modal
+        function closeStudentDetailModal() {
+            document.getElementById('studentDetailModal').style.display = 'none';
+            document.getElementById('studentDetailContent').innerHTML = '';
+        }
+        
+        // Close send message modal
+        function closeSendMessageModal() {
+            document.getElementById('sendMessageModal').style.display = 'none';
+            document.getElementById('sendMessageForm').reset();
+        }
+        
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target.id === 'studentDetailModal') {
+                closeStudentDetailModal();
+            }
+            if (e.target.id === 'sendMessageModal') {
+                closeSendMessageModal();
+            }
+        });
+        
+        // Initialize page when DOM loads
+        document.addEventListener('DOMContentLoaded', initTrainerStudents);
+    </script>
+</body>
+</html>

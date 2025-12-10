@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - AHL Training Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>AHL Training</h2>
+            <ul class="nav-menu">
+                <li><a href="dashboard.html" class="active">Dashboard</a></li>
+                <li><a href="students.html">Students</a></li>
+                <li><a href="trainers.html">Trainers</a></li>
+                <li><a href="courses.html">Courses</a></li>
+                <li><a href="roles.html">Roles</a></li>
+                <li><a href="ai-settings.html">AI Settings</a></li>
+                <li><a href="whatsapp-settings.html">WhatsApp Settings</a></li>
+                <li><a href="#" class="logout-btn">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <main class="main-content">
+            <header class="header">
+                <h1>Admin Dashboard</h1>
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <button class="logout-btn">Logout</button>
+                </div>
+            </header>
+            
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalStudents">0</div>
+                    <div class="stat-label">Total Students</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalTrainers">0</div>
+                    <div class="stat-label">Total Trainers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalCourses">0</div>
+                    <div class="stat-label">Total Courses</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pendingSubmissions">0</div>
+                    <div class="stat-label">Pending Submissions</div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card">
+                <h3>Quick Actions</h3>
+                <div class="flex gap-1">
+                    <button class="btn btn-primary" onclick="showCreateUserModal()">Create User</button>
+                    <button class="btn btn-primary" onclick="showCreateCourseModal()">Create Course</button>
+                    <a href="students.html" class="btn btn-secondary">Manage Students</a>
+                    <a href="courses.html" class="btn btn-secondary">Manage Courses</a>
+                </div>
+            </div>
+            
+            <!-- Trainer Management -->
+            <div class="card">
+                <div class="flex justify-between align-center mb-1">
+                    <h3>Trainer Management</h3>
+                    <button class="btn btn-primary" onclick="showTrainerAssignmentModal()">Assign Trainer to Course</button>
+                </div>
+                <div id="trainerAssignments">
+                    <p>Loading trainer assignments...</p>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="card">
+                <h3>Recent Activity</h3>
+                <div id="recentActivity">
+                    <p>Loading recent activity...</p>
+                </div>
+            </div>
+            
+            <!-- WhatsApp Testing -->
+            <div class="card">
+                <h3>📱 WhatsApp Notification Testing</h3>
+                <div class="flex gap-1 mb-1">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="testPhone">Phone Number:</label>
+                        <input type="tel" id="testPhone" placeholder="7021247525" value="7021247525">
+                    </div>
+                    <div class="form-group" style="flex: 2;">
+                        <label for="testMessage">Test Message:</label>
+                        <textarea id="testMessage" rows="3" placeholder="Enter test message...">🎓 AHL Training System Test
+
+WhatsApp notification system is working correctly!
+
+✅ System Status: Active</textarea>
+                    </div>
+                </div>
+                <div class="flex gap-1">
+                    <button class="btn btn-primary" onclick="sendTestWhatsApp()">Send Test Message</button>
+                    <button class="btn btn-secondary" onclick="checkWhatsAppStatus()">Check WAHA Status</button>
+                </div>
+                <div id="whatsappStatus" class="mt-1" style="padding: 0.5rem; background: #f8f9fa; border-radius: 5px; display: none;"></div>
+            </div>
+            
+            <!-- Training Roles Overview -->
+            <div class="card">
+                <h3>Training Roles</h3>
+                <div id="trainingRoles">
+                    <div class="roles-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <!-- Role cards will be loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Create User Modal -->
+    <div id="createUserModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 5% auto; padding: 2rem; width: 90%; max-width: 500px; border-radius: 10px;">
+            <h3>Create New User</h3>
+            <form id="createUserForm">
+                <div class="form-group">
+                    <label for="userName">Name:</label>
+                    <input type="text" id="userNameInput" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="userEmail">Email:</label>
+                    <input type="email" id="userEmail" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="userPhone">Phone:</label>
+                    <input type="tel" id="userPhone" name="phone" required>
+                </div>
+                <div class="form-group">
+                    <label for="userPassword">Password:</label>
+                    <input type="password" id="userPassword" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="userRole">Role:</label>
+                    <select id="userRole" name="role" required>
+                        <option value="">Select Role</option>
+                        <!-- Roles will be loaded dynamically -->
+                    </select>
+                </div>
+                <div class="form-group" id="courseRoleGroup" style="display: none;">
+                    <label for="courseRole">Course Role:</label>
+                    <select id="courseRole" name="course_role">
+                        <option value="">Select Course Role</option>
+                        <!-- Course roles will be loaded dynamically -->
+                    </select>
+                </div>
+                <div class="form-group" id="trainerCoursesGroup" style="display: none;">
+                    <label for="trainerCourses">Assign Courses (for Trainers):</label>
+                    <div id="trainerCoursesList" class="checkbox-group">
+                        <!-- Courses will be loaded dynamically -->
+                    </div>
+                </div>
+                <div class="flex gap-1 mt-1">
+                    <button type="submit" class="btn btn-primary">Create User</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideCreateUserModal()">Cancel</button>
+                </div>
+            </form>
+            <div id="createUserError" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <!-- Create Course Modal -->
+    <div id="createCourseModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 5% auto; padding: 2rem; width: 90%; max-width: 500px; border-radius: 10px;">
+            <h3>Create New Course</h3>
+            <form id="createCourseForm">
+                <div class="form-group">
+                    <label for="courseRoleName">Role Name:</label>
+                    <select id="courseRoleName" name="role_name" required>
+                        <option value="">Select Role</option>
+                        <option value="AI Intern">AI Intern</option>
+                        <option value="CRM Mumbai">CRM Mumbai</option>
+                        <option value="Hair Stylist Level 1">Hair Stylist Level 1</option>
+                        <option value="Digital Marketing Intern">Digital Marketing Intern</option>
+                        <option value="Video Editor Intern">Video Editor Intern</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="courseTitle">Course Title:</label>
+                    <input type="text" id="courseTitle" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="courseTrainer">Assign Trainer:</label>
+                    <select id="courseTrainer" name="trainer_id" required>
+                        <option value="">Select Trainer</option>
+                    </select>
+                </div>
+                <div class="flex gap-1 mt-1">
+                    <button type="submit" class="btn btn-primary">Create Course</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideCreateCourseModal()">Cancel</button>
+                </div>
+            </form>
+            <div id="createCourseError" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <!-- Trainer Assignment Modal -->
+    <div id="trainerAssignmentModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 5% auto; padding: 2rem; width: 90%; max-width: 500px; border-radius: 10px;">
+            <h3>Assign Trainer to Course</h3>
+            <form id="trainerAssignmentForm">
+                <div class="form-group">
+                    <label for="assignTrainer">Select Trainer:</label>
+                    <select id="assignTrainer" name="trainer_id" required>
+                        <option value="">Select Trainer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="assignCourse">Select Course:</label>
+                    <select id="assignCourse" name="course_id" required>
+                        <option value="">Select Course</option>
+                    </select>
+                </div>
+                <div class="flex gap-1 mt-1">
+                    <button type="submit" class="btn btn-primary">Assign Trainer</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideTrainerAssignmentModal()">Cancel</button>
+                </div>
+            </form>
+            <div id="trainerAssignmentError" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <script src="../js/main.js"></script>
+    <script src="../js/admin-dashboard.js"></script>
+</body>
+</html>

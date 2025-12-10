@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activities - AHL Training Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>AHL Training</h2>
+            <ul class="nav-menu">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="courses.html">My Courses</a></li>
+                <li><a href="activities.html" class="active">Activities</a></li>
+                <li><a href="#" class="logout-btn">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <main class="main-content">
+            <header class="header">
+                <h1>Activities</h1>
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <button class="logout-btn">Logout</button>
+                </div>
+            </header>
+            
+            <!-- Activities Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalActivities">0</div>
+                    <div class="stat-label">Total Activities</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="completedActivities">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pendingActivities">0</div>
+                    <div class="stat-label">Pending Review</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="approvedActivities">0</div>
+                    <div class="stat-label">Approved</div>
+                </div>
+            </div>
+            
+            <!-- Filter and Search -->
+            <div class="card">
+                <div class="flex justify-between align-center mb-1">
+                    <h3>My Activities</h3>
+                    <div class="flex gap-1">
+                        <select id="statusFilter" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                            <option value="">All Status</option>
+                            <option value="not_submitted">Not Submitted</option>
+                            <option value="pending">Pending Review</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Activities List -->
+            <div id="activitiesList">
+                <p>Loading activities...</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Activity Submission Modal -->
+    <div id="activityModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 2% auto; padding: 2rem; width: 90%; max-width: 800px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
+            <div class="flex justify-between align-center mb-1">
+                <h3 id="activityModalTitle">Activity</h3>
+                <button class="btn btn-secondary" onclick="closeActivityModal()">×</button>
+            </div>
+            
+            <div id="activityContent">
+                <!-- Activity content will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <script src="../js/main.js"></script>
+    <script>
+        let currentUser = null;
+        let userCourse = null;
+        let courseVideos = [];
+        let userProgress = [];
+        let userSubmissions = [];
+        let activities = [];
+        let filteredActivities = [];
+        
+        // Initialize activities page
+        async function initActivitiesPage() {
+            try {
+                currentUser = await LMSUtils.getCurrentUser();
+                
+                if (currentUser.role !== 'student') {
+                    window.location.href = '/';
+                    return;
+                }
+                
+                document.getElementById('userName').textContent = currentUser.name;
+                
+                await loadActivitiesData();
+                updateStatistics();
+                renderActivities();
+                setupEventListeners();
+                
+                // Check if specific submission should be shown from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const submissionId = urlParams.get('submission');
+                if (submissionId) {
+                    viewSubmissionDetails(parseInt(submissionId));
+                }
+                
+            } catch (error) {
+                console.error('Activities page initialization failed:', error);
+                window.location.href = '/';
+            }
+        }
+        
+        // Load activities data
+        async function loadActivitiesData() {
+            try {
+                // Get all courses to find user's course
+                const allCourses = await LMSUtils.apiCall('/courses');
+                userCourse = allCourses.find(course => course.role_name === currentUser.course_role);
+                
+                if (userCourse) {
+                    // Get videos for the course
+                    courseVideos = await LMSUtils.apiCall(`/courses/${userCourse.id}/videos`);
+                    courseVideos.sort((a, b) => a.sequence - b.sequence);
+                    
+                    // Get user's progress
+                    userProgress = await LMSUtils.apiCall(`/progress/${currentUser.id}`);
+                    
+                    // Get user's submissions
+                    userSubmissions = await LMSUtils.apiCall(`/submissions/student/${currentUser.id}`);
+                    
+                    // Get real activities from database
+                    const courseActivities = await LMSUtils.apiCall(`/activities?course_id=${userCourse.id}`);
+                    
+                    // Create activities list with real data
+                    activities = createActivitiesList(courseActivities);
+                    filteredActivities = [...activities];
+                }
+            } catch (error) {
+                console.error('Failed to load activities data:', error);
+                LMSUtils.showNotification('Failed to load activities data', 'error');
+            }
+        }
+        
+        // Create activities list based on real activities and user progress
+        function createActivitiesList(courseActivities) {
+            const activitiesList = [];
+            
+            courseActivities.forEach(activity => {
+                const progress = userProgress.find(p => p.video_id === activity.video_id);
+                const submission = userSubmissions.find(s => s.video_id === activity.video_id);
+                
+                // Only show activities for completed videos
+                if (progress && progress.status === 'completed') {
+                    activitiesList.push({
+                        id: activity.id,
+                        video_id: activity.video_id,
+                        video_title: activity.video_title,
+                        video_sequence: activity.video_sequence,
+                        title: activity.title,
+                        description: activity.description || `Complete the activity for video ${activity.video_sequence}: ${activity.video_title}`,
+                        questions: activity.questions,
+                        submission: submission,
+                        status: submission ? submission.status : 'not_submitted',
+                        submitted_at: submission ? submission.submitted_at : null,
+                        feedback: submission ? submission.feedback : null
+                    });
+                }
+            });
+            
+            return activitiesList;
+        }
+        
+        // Update statistics
+        function updateStatistics() {
+            const totalActivities = activities.length;
+            const completedActivities = activities.filter(a => a.status === 'approved').length;
+            const pendingActivities = activities.filter(a => a.status === 'pending').length;
+            const approvedActivities = activities.filter(a => a.status === 'approved').length;
+            
+            document.getElementById('totalActivities').textContent = totalActivities;
+            document.getElementById('completedActivities').textContent = completedActivities;
+            document.getElementById('pendingActivities').textContent = pendingActivities;
+            document.getElementById('approvedActivities').textContent = approvedActivities;
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            const statusFilter = document.getElementById('statusFilter');
+            statusFilter.addEventListener('change', filterActivities);
+        }
+        
+        // Filter activities
+        function filterActivities() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            filteredActivities = activities.filter(activity => {
+                return !statusFilter || activity.status === statusFilter;
+            });
+            
+            renderActivities();
+        }
+        
+        // Render activities
+        function renderActivities() {
+            const container = document.getElementById('activitiesList');
+            
+            if (filteredActivities.length === 0) {
+                container.innerHTML = `
+                    <div class="card">
+                        <div class="alert alert-info">
+                            <h4>No Activities Available</h4>
+                            <p>Complete videos in your course to unlock activities.</p>
+                            <a href="courses.html" class="btn btn-primary">Go to Courses</a>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const activitiesHTML = filteredActivities.map(activity => {
+                const statusClass = {
+                    'not_submitted': 'status-warning',
+                    'pending': 'status-pending',
+                    'approved': 'status-success',
+                    'rejected': 'status-danger'
+                }[activity.status] || 'status-secondary';
+                
+                const statusText = {
+                    'not_submitted': 'Not Submitted',
+                    'pending': 'Pending Review',
+                    'approved': 'Approved',
+                    'rejected': 'Rejected'
+                }[activity.status] || 'Unknown';
+                
+                const statusIcon = {
+                    'not_submitted': '📝',
+                    'pending': '⏳',
+                    'approved': '✅',
+                    'rejected': '❌'
+                }[activity.status] || '❓';
+                
+                return `
+                    <div class="card activity-card" style="margin-bottom: 1rem; border-left: 4px solid ${activity.status === 'approved' ? '#4CAF50' : activity.status === 'rejected' ? '#f44336' : activity.status === 'pending' ? '#ff9800' : '#2196F3'};">
+                        <div class="flex justify-between align-center mb-1">
+                            <div class="activity-info" style="flex: 1;">
+                                <div class="flex align-center gap-1 mb-1">
+                                    <span class="activity-icon" style="font-size: 1.2rem;">${statusIcon}</span>
+                                    <h4 style="margin: 0;">${activity.title}</h4>
+                                    <span class="status-badge ${statusClass}">${statusText}</span>
+                                </div>
+                                
+                                <p style="margin: 0.5rem 0; color: #666;">
+                                    <strong>Video:</strong> ${activity.video_sequence}. ${activity.video_title}
+                                </p>
+                                
+                                ${activity.submitted_at ? `
+                                    <p style="margin: 0.5rem 0; color: #666; font-size: 0.9rem;">
+                                        <strong>Submitted:</strong> ${LMSUtils.formatDate(activity.submitted_at)}
+                                    </p>
+                                ` : ''}
+                                
+                                ${activity.feedback ? `
+                                    <div class="feedback" style="background: #f8f9fa; padding: 0.75rem; border-radius: 5px; margin-top: 0.5rem;">
+                                        <strong>Trainer Feedback:</strong>
+                                        <p style="margin: 0.25rem 0 0 0; color: #555;">${activity.feedback}</p>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="activity-actions">
+                                ${activity.status === 'not_submitted' ? `
+                                    <button class="btn btn-primary" onclick="submitActivity(${activity.id})" style="padding: 0.75rem 1.5rem;">
+                                        Submit Activity
+                                    </button>
+                                ` : activity.status === 'rejected' ? `
+                                    <button class="btn btn-warning" onclick="resubmitActivity(${activity.id})" style="padding: 0.75rem 1.5rem;">
+                                        Resubmit
+                                    </button>
+                                ` : `
+                                    <button class="btn btn-secondary" onclick="viewActivityDetails(${activity.id})" style="padding: 0.75rem 1.5rem;">
+                                        View Details
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = activitiesHTML;
+        }
+        
+        // Submit activity
+        function submitActivity(activityId) {
+            const activity = activities.find(a => a.id === activityId);
+            if (!activity) return;
+            
+            showActivitySubmissionForm(activity);
+        }
+        
+        // Resubmit activity
+        function resubmitActivity(activityId) {
+            const activity = activities.find(a => a.id === activityId);
+            if (!activity) return;
+            
+            showActivitySubmissionForm(activity, true);
+        }
+        
+        // View activity details
+        function viewActivityDetails(activityId) {
+            const activity = activities.find(a => a.id === activityId);
+            if (!activity) return;
+            
+            showActivityDetails(activity);
+        }
+        
+        // View submission details
+        function viewSubmissionDetails(submissionId) {
+            const submission = userSubmissions.find(s => s.id === submissionId);
+            if (!submission) return;
+            
+            const activity = activities.find(a => a.video_id === submission.video_id);
+            if (activity) {
+                showActivityDetails(activity);
+            }
+        }
+        
+        // Show activity submission form
+        function showActivitySubmissionForm(activity, isResubmission = false) {
+            const modalTitle = document.getElementById('activityModalTitle');
+            const modalContent = document.getElementById('activityContent');
+            
+            modalTitle.textContent = isResubmission ? `Resubmit: ${activity.title}` : activity.title;
+            
+            modalContent.innerHTML = `
+                <div class="activity-submission-form">
+                    <div class="activity-description" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                        <h4>Activity Instructions</h4>
+                        <p>${activity.description}</p>
+                        <p><strong>Video:</strong> ${activity.video_sequence}. ${activity.video_title}</p>
+                        
+                        ${activity.questions ? `
+                            <div class="activity-questions" style="background: #e3f2fd; padding: 1rem; border-radius: 5px; margin-top: 1rem; border-left: 4px solid #2196f3;">
+                                <h5 style="margin: 0 0 0.5rem 0; color: #1976d2;">📝 Questions to Answer:</h5>
+                                <div style="white-space: pre-wrap; line-height: 1.6;">${typeof activity.questions === 'string' ? activity.questions : JSON.stringify(activity.questions, null, 2)}</div>
+                            </div>
+                        ` : ''}
+                        
+                        ${isResubmission && activity.feedback ? `
+                            <div class="previous-feedback" style="background: #fff3cd; padding: 0.75rem; border-radius: 5px; margin-top: 1rem;">
+                                <strong>Previous Feedback:</strong>
+                                <p style="margin: 0.25rem 0 0 0;">${activity.feedback}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <form id="activitySubmissionForm">
+                        <input type="hidden" id="submissionVideoId" value="${activity.video_id}">
+                        
+                        <div class="form-group">
+                            <label for="submissionText">Your Submission:</label>
+                            <textarea id="submissionText" name="submission_text" rows="8" 
+                                      placeholder="Write your activity submission here..." 
+                                      required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-family: inherit;">${activity.submission ? activity.submission.submission_text || '' : ''}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="submissionFile">Upload File (Optional):</label>
+                            <input type="file" id="submissionFile" name="file" 
+                                   accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png" 
+                                   style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                            <small style="color: #666;">Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)</small>
+                        </div>
+                        
+                        <div class="flex gap-1 mt-2">
+                            <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem;">
+                                ${isResubmission ? 'Resubmit Activity' : 'Submit Activity'}
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="closeActivityModal()" style="padding: 0.75rem 2rem;">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            // Setup form submission
+            document.getElementById('activitySubmissionForm').addEventListener('submit', handleActivitySubmission);
+            
+            document.getElementById('activityModal').style.display = 'block';
+        }
+        
+        // Show activity details
+        function showActivityDetails(activity) {
+            const modalTitle = document.getElementById('activityModalTitle');
+            const modalContent = document.getElementById('activityContent');
+            
+            modalTitle.textContent = activity.title;
+            
+            modalContent.innerHTML = `
+                <div class="activity-details">
+                    <div class="activity-info" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                        <h4>Activity Information</h4>
+                        <p><strong>Description:</strong> ${activity.description}</p>
+                        <p><strong>Video:</strong> ${activity.video_sequence}. ${activity.video_title}</p>
+                        <p><strong>Status:</strong> <span class="status-badge status-${activity.status === 'approved' ? 'success' : activity.status === 'rejected' ? 'danger' : activity.status === 'pending' ? 'pending' : 'warning'}">${activity.status.replace('_', ' ').toUpperCase()}</span></p>
+                        ${activity.submitted_at ? `<p><strong>Submitted:</strong> ${LMSUtils.formatDate(activity.submitted_at)}</p>` : ''}
+                        
+                        ${activity.questions ? `
+                            <div class="activity-questions" style="background: #e3f2fd; padding: 1rem; border-radius: 5px; margin-top: 1rem; border-left: 4px solid #2196f3;">
+                                <h5 style="margin: 0 0 0.5rem 0; color: #1976d2;">📝 Original Questions:</h5>
+                                <div style="white-space: pre-wrap; line-height: 1.6;">${typeof activity.questions === 'string' ? activity.questions : JSON.stringify(activity.questions, null, 2)}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    ${activity.submission ? `
+                        <div class="submission-content" style="background: white; border: 1px solid #ddd; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                            <h4>Your Submission</h4>
+                            <div style="white-space: pre-wrap; line-height: 1.6;">${activity.submission.submission_text || 'No text submission'}</div>
+                            ${activity.submission.file_path ? `
+                                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                                    <strong>Attached File:</strong> 
+                                    <a href="${activity.submission.file_path}" target="_blank" class="btn btn-secondary" style="margin-left: 0.5rem; padding: 0.25rem 0.75rem;">View File</a>
+                                </div>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+                    
+                    ${activity.feedback ? `
+                        <div class="trainer-feedback" style="background: ${activity.status === 'approved' ? '#e8f5e8' : '#fff3cd'}; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                            <h4>Trainer Feedback</h4>
+                            <div style="white-space: pre-wrap; line-height: 1.6;">${activity.feedback}</div>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="flex gap-1">
+                        ${activity.status === 'rejected' ? `
+                            <button class="btn btn-warning" onclick="closeActivityModal(); resubmitActivity(${activity.id});">
+                                Resubmit Activity
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-secondary" onclick="closeActivityModal()">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('activityModal').style.display = 'block';
+        }
+        
+        // Handle activity submission
+        async function handleActivitySubmission(e) {
+            e.preventDefault();
+            
+            const videoId = document.getElementById('submissionVideoId').value;
+            const submissionText = document.getElementById('submissionText').value;
+            const fileInput = document.getElementById('submissionFile');
+            
+            if (!submissionText.trim()) {
+                LMSUtils.showNotification('Please enter your submission text', 'error');
+                return;
+            }
+            
+            try {
+                // For now, we'll simulate file upload by just storing the filename
+                const fileName = fileInput.files[0] ? fileInput.files[0].name : null;
+                
+                const submissionData = {
+                    user_id: currentUser.id,
+                    video_id: parseInt(videoId),
+                    submission_text: submissionText,
+                    file_path: fileName ? `/uploads/${fileName}` : null
+                };
+                
+                await LMSUtils.apiCall('/submissions', {
+                    method: 'POST',
+                    body: JSON.stringify(submissionData)
+                });
+                
+                LMSUtils.showNotification('Activity submitted successfully! Your trainer will review it soon.', 'success');
+                
+                closeActivityModal();
+                
+                // Reload data and update UI
+                await loadActivitiesData();
+                updateStatistics();
+                renderActivities();
+                
+            } catch (error) {
+                console.error('Failed to submit activity:', error);
+                LMSUtils.showNotification('Failed to submit activity. Please try again.', 'error');
+            }
+        }
+        
+        // Close activity modal
+        function closeActivityModal() {
+            document.getElementById('activityModal').style.display = 'none';
+            document.getElementById('activityContent').innerHTML = '';
+        }
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target.id === 'activityModal') {
+                closeActivityModal();
+            }
+        });
+        
+        // Initialize page when DOM loads
+        document.addEventListener('DOMContentLoaded', initActivitiesPage);
+    </script>
+</body>
+</html>

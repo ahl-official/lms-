@@ -1,0 +1,1982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Courses Management - AHL Training Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        /* Spinner animation */
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 5px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Pending count badge */
+        #pendingCount {
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            margin-left: 5px;
+            display: none;
+        }
+        
+        /* Button improvements */
+        .btn-warning {
+            background-color: #ffc107;
+            border-color: #ffc107;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        
+        /* Dropdown styles */
+        .dropdown-toggle::after {
+            margin-left: 0.5rem;
+        }
+        
+        .dropdown-menu {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .dropdown-item {
+            transition: background-color 0.2s ease;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f8f9fa !important;
+            color: #333 !important;
+        }
+        
+        .dropdown-item:last-child {
+            border-bottom: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>AHL Training</h2>
+            <ul class="nav-menu">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="students.html">Students</a></li>
+                <li><a href="trainers.html">Trainers</a></li>
+                <li><a href="courses.html" class="active">Courses</a></li>
+                <li><a href="roles.html">Roles</a></li>
+                <li><a href="ai-settings.html">AI Settings</a></li>
+                <li><a href="whatsapp-settings.html">WhatsApp Settings</a></li>
+                <li><a href="#" class="logout-btn">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <main class="main-content">
+            <header class="header">
+                <h1>Courses Management</h1>
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <button class="logout-btn">Logout</button>
+                </div>
+            </header>
+            
+            <!-- Courses Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalCourses">0</div>
+                    <div class="stat-label">Total Courses</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalVideos">0</div>
+                    <div class="stat-label">Total Videos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalActivities">0</div>
+                    <div class="stat-label">Total Activities</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="enrolledStudents">0</div>
+                    <div class="stat-label">Enrolled Students</div>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="card">
+                <div class="flex justify-between align-center mb-1">
+                    <h3>All Courses</h3>
+                    <div class="flex gap-1">
+                        <select id="roleFilter" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                            <option value="">All Roles</option>
+                            <!-- Roles will be loaded dynamically -->
+                        </select>
+                    <button class="btn btn-success" id="reviewAIBtn" data-action="view-pending-ai">
+                            AI Content Review
+                            <span id="pendingCount" class="badge" style="display: none; background: #dc3545; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.8em; margin-left: 5px;">0</span>
+                        </button>
+                    <button class="btn btn-primary" id="createCourseBtn" data-action="show-create-course">Create Course</button>
+                    </div>
+                </div>
+                
+                <div id="coursesContainer">
+                    <p>Loading courses...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- AI Content Generation Modal -->
+    <div id="generateAIModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 10% auto; padding: 2rem; width: 90%; max-width: 500px; border-radius: 10px;">
+            <h3 id="generateAITitle">Generate AI Content</h3>
+            <input type="hidden" id="aiVideoId">
+            <p>Choose the type of content to generate using AI:</p>
+            <div class="flex gap-1 mt-2">
+                <button class="btn btn-primary" data-action="generate-content" data-type="test">
+                    Generate Test Questions
+                </button>
+                <button class="btn btn-info" data-action="generate-content" data-type="activity">
+                    Generate Activity
+                </button>
+            </div>
+            <div class="flex gap-1 mt-2">
+                <button class="btn btn-secondary" data-action="hide-modal" data-target="generateAIModal">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- AI Content Review Modal -->
+    <div id="aiReviewModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 5% auto; padding: 2rem; width: 95%; max-width: 800px; border-radius: 10px; max-height: 80vh; overflow-y: auto;">
+            <div class="flex justify-between align-center mb-2">
+                <h3>AI Content Review</h3>
+                <button class="btn btn-secondary" data-action="hide-modal" data-target="aiReviewModal">Close</button>
+            </div>
+            <div id="pendingContentContainer">
+                <!-- Pending AI content will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Create Course Modal -->
+    <div id="createCourseModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 5% auto; padding: 2rem; width: 90%; max-width: 500px; border-radius: 10px;">
+            <h3>Create New Course</h3>
+            <form id="createCourseForm">
+                <div class="form-group">
+                    <label for="courseRoleName">Role Name:</label>
+                    <select id="courseRoleName" name="role_name" required>
+                        <option value="">Select Role</option>
+                        <!-- Roles will be loaded dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="courseTitle">Course Title:</label>
+                    <input type="text" id="courseTitle" name="title" required placeholder="e.g., AI Intern Training Program">
+                </div>
+                <div class="form-group">
+                    <label for="courseTrainer">Assign Trainer:</label>
+                    <select id="courseTrainer" name="trainer_id" required>
+                        <option value="">Select Trainer</option>
+                        <!-- Trainers will be loaded dynamically -->
+                    </select>
+                </div>
+                <div class="flex gap-1 mt-1">
+                    <button type="submit" class="btn btn-primary">Create Course</button>
+                <button type="button" class="btn btn-secondary" data-action="hide-modal" data-target="createCourseModal">Cancel</button>
+                </div>
+            </form>
+            <div id="createCourseError" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <!-- Add Video Modal -->
+    <div id="addVideoModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 5% auto; padding: 2rem; width: 90%; max-width: 600px; border-radius: 10px;">
+            <h3 id="addVideoTitle">Add Video to Course</h3>
+            <form id="addVideoForm">
+                <input type="hidden" id="videoCourseId" name="course_id">
+                <div class="form-group">
+                    <label for="videoTitle">Video Title:</label>
+                    <input type="text" id="videoTitle" name="title" required placeholder="e.g., Introduction to AI">
+                </div>
+                <div class="form-group">
+                    <label for="gumletUrl">Gumlet URL:</label>
+                    <input type="url" id="gumletUrl" name="gumlet_url" required placeholder="https://play.gumlet.io/embed/68411fb92ea48d13d446fb04">
+                    <small style="color: #666;">Paste the full Gumlet embed URL</small>
+                </div>
+                <div class="form-group">
+                    <label for="videoSequence">Sequence (Order):</label>
+                    <input type="number" id="videoSequence" name="sequence" required min="1" placeholder="1">
+                    <small style="color: #666;">Order in which this video should appear</small>
+                </div>
+                <div class="form-group">
+                    <label for="videoLevel">Level:</label>
+                    <select id="videoLevel" required>
+                        <option value="">Select Level</option>
+                    </select>
+                    <small style="color: #666;">Choose the level that contains the chapter</small>
+                </div>
+                <div class="form-group">
+                    <label for="videoChapter">Chapter:</label>
+                    <select id="videoChapter" name="chapter_id" required>
+                        <option value="">Select Chapter</option>
+                    </select>
+                    <small style="color: #666;">Choose the chapter this lesson belongs to</small>
+                </div>
+                <div class="flex gap-1 mt-1">
+                    <button type="submit" class="btn btn-primary">Add Video</button>
+                <button type="button" class="btn btn-secondary" data-action="hide-modal" data-target="addVideoModal">Cancel</button>
+                </div>
+            </form>
+            <div id="addVideoError" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Add Level Modal -->
+    <div id="addLevelModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 8% auto; padding: 2rem; width: 90%; max-width: 500px; border-radius: 10px;">
+            <h3 id="addLevelTitle">Add Level</h3>
+            <form id="addLevelForm">
+                <input type="hidden" id="levelCourseId" name="course_id">
+                <div class="form-group">
+                    <label for="levelTitle">Level Title:</label>
+                    <input type="text" id="levelTitle" name="title" required placeholder="e.g., Level 1: Foundations">
+                </div>
+                <div class="form-group">
+                    <label for="levelDescription">Description:</label>
+                    <textarea id="levelDescription" name="description" rows="2" placeholder="Optional description for this level"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="levelSequence">Sequence (Order):</label>
+                    <input type="number" id="levelSequence" name="sequence" min="1" placeholder="1">
+                    <small style="color: #666;">Lower numbers appear earlier in the course</small>
+                </div>
+                <div class="flex gap-1 mt-1">
+                    <button type="submit" class="btn btn-primary">Add Level</button>
+                <button type="button" class="btn btn-secondary" data-action="hide-modal" data-target="addLevelModal">Cancel</button>
+                </div>
+            </form>
+            <div id="addLevelError" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Add Chapter Modal -->
+    <div id="addChapterModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 8% auto; padding: 2rem; width: 90%; max-width: 500px; border-radius: 10px;">
+            <h3 id="addChapterTitle">Add Chapter</h3>
+            <form id="addChapterForm">
+                <input type="hidden" id="chapterCourseId" name="course_id">
+                <div class="form-group">
+                    <label for="chapterLevelSelect">Level:</label>
+                    <select id="chapterLevelSelect" name="level_id" required>
+                        <option value="">Select Level</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="chapterTitle">Chapter Title:</label>
+                    <input type="text" id="chapterTitle" name="title" required placeholder="e.g., Chapter 1: Start of the Day">
+                </div>
+                <div class="form-group">
+                    <label for="chapterDescription">Description:</label>
+                    <textarea id="chapterDescription" name="description" rows="2" placeholder="Optional description for this chapter"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="chapterSequence">Sequence (Order):</label>
+                    <input type="number" id="chapterSequence" name="sequence" min="1" placeholder="1">
+                    <small style="color: #666;">Lower numbers appear earlier within the level</small>
+                </div>
+                <div class="flex gap-1 mt-1">
+                    <button type="submit" class="btn btn-primary">Add Chapter</button>
+                <button type="button" class="btn btn-secondary" data-action="hide-modal" data-target="addChapterModal">Cancel</button>
+                </div>
+            </form>
+            <div id="addChapterError" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Create Test Modal -->
+    <div id="createTestModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 2% auto; padding: 2rem; width: 95%; max-width: 800px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
+            <h3 id="createTestTitle">Create Test for Video</h3>
+            <form id="createTestForm">
+                <input type="hidden" id="testVideoId" name="videoId">
+                <div class="form-group">
+                    <label for="testTitle">Test Title:</label>
+                    <input type="text" id="testTitle" name="title" required placeholder="e.g., AI Basics Test">
+                </div>
+                <div class="form-group">
+                    <label for="testDescription">Description:</label>
+                    <textarea id="testDescription" name="description" rows="2" placeholder="Brief description of the test..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="passingScore">Passing Score (%):</label>
+                    <input type="number" id="passingScore" name="passingScore" min="0" max="100" value="70" placeholder="70">
+                    <small style="color: #666;">Students need this percentage to pass</small>
+                </div>
+                <div class="form-group">
+                    <label>Test Questions:</label>
+                    <div id="questionsContainer">
+                        <!-- Questions will be added here dynamically -->
+                    </div>
+                <button type="button" class="btn btn-secondary" data-action="add-question" style="margin-top: 1rem;">Add Question</button>
+                </div>
+                <div class="flex gap-1 mt-1">
+                    <button type="submit" class="btn btn-primary">Create Test</button>
+                <button type="button" class="btn btn-secondary" data-action="hide-modal" data-target="createTestModal">Cancel</button>
+                </div>
+            </form>
+            <div id="createTestError" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Add Activity Modal -->
+    <div id="addActivityModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 5% auto; padding: 2rem; width: 90%; max-width: 600px; border-radius: 10px;">
+            <h3 id="addActivityTitle">Add Activity to Video</h3>
+            <form id="addActivityForm">
+                <input type="hidden" id="activityVideoId" name="video_id">
+                <div class="form-group">
+                    <label for="activityTitle">Activity Title:</label>
+                    <input type="text" id="activityTitle" name="title" required placeholder="e.g., AI Basics Quiz">
+                </div>
+                <div class="form-group">
+                    <label for="activityDescription">Description:</label>
+                    <textarea id="activityDescription" name="description" rows="3" placeholder="Describe what the student needs to do..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="activityQuestions">Questions (JSON format):</label>
+                    <textarea id="activityQuestions" name="questions" rows="8" placeholder='[{"question": "What is AI?", "options": ["Option A", "Option B", "Option C"], "correct": 0}]'></textarea>
+                    <small style="color: #666;">Enter questions in JSON format for multiple choice tests</small>
+                </div>
+                <div class="flex gap-1 mt-1">
+                    <button type="submit" class="btn btn-primary">Add Activity</button>
+                <button type="button" class="btn btn-secondary" data-action="hide-modal" data-target="addActivityModal">Cancel</button>
+                </div>
+            </form>
+            <div id="addActivityError" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <!-- Delete Course Confirmation Modal -->
+    <div id="deleteCourseModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 15% auto; padding: 2rem; width: 90%; max-width: 500px; border-radius: 10px; text-align: center;">
+            <h3 style="color: #dc3545; margin-bottom: 1rem;">Confirm Delete Course</h3>
+            <p id="deleteCourseMessage" style="margin-bottom: 2rem;">Are you sure you want to delete this course?</p>
+            <div class="flex gap-1 justify-center">
+                <button id="confirmDeleteCourseBtn" class="btn btn-danger">Delete Course</button>
+                <button class="btn btn-secondary" data-action="hide-modal" data-target="deleteCourseModal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Video Modal -->
+    <div id="editVideoModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 5% auto; padding: 2rem; width: 90%; max-width: 600px; border-radius: 10px;">
+            <h3 id="editVideoTitle">Edit Video</h3>
+            <form id="editVideoForm">
+                <input type="hidden" id="editVideoId" name="video_id">
+                <div class="form-group">
+                    <label for="editVideoTitleInput">Video Title:</label>
+                    <input type="text" id="editVideoTitleInput" name="title" required placeholder="e.g., Introduction to AI">
+                </div>
+                <div class="form-group">
+                    <label for="editGumletUrl">Gumlet URL:</label>
+                    <input type="url" id="editGumletUrl" name="gumlet_url" required placeholder="https://play.gumlet.io/embed/68411fb92ea48d13d446fb04">
+                    <small style="color: #666;">Paste the full Gumlet embed URL</small>
+                </div>
+                <div class="form-group">
+                    <label for="editVideoSequence">Sequence (Order):</label>
+                    <input type="number" id="editVideoSequence" name="sequence" required min="1" placeholder="1">
+                    <small style="color: #666;">Order in which this video should appear</small>
+                </div>
+                <div class="form-group">
+                    <label for="editVideoLevel">Level:</label>
+                    <select id="editVideoLevel">
+                        <option value="">Select Level</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editVideoChapter">Chapter:</label>
+                    <select id="editVideoChapter" name="chapter_id" required>
+                        <option value="">Select Chapter</option>
+                    </select>
+                </div>
+                <div class="flex gap-1 mt-1">
+                    <button type="submit" class="btn btn-primary">Update Video</button>
+                <button type="button" class="btn btn-secondary" data-action="hide-modal" data-target="editVideoModal">Cancel</button>
+                </div>
+            </form>
+            <div id="editVideoError" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Delete Video Confirmation Modal -->
+    <div id="deleteVideoModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 15% auto; padding: 2rem; width: 90%; max-width: 500px; border-radius: 10px; text-align: center;">
+            <h3 style="color: #dc3545; margin-bottom: 1rem;">Confirm Delete Video</h3>
+            <p id="deleteVideoMessage" style="margin-bottom: 2rem;">Are you sure you want to delete this video?</p>
+            <div class="flex gap-1 justify-center">
+                <button id="confirmDeleteVideoBtn" class="btn btn-danger">Delete Video</button>
+                <button class="btn btn-secondary" data-action="hide-modal" data-target="deleteVideoModal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Transcript Modal -->
+    <div id="transcriptModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 5% auto; padding: 2rem; width: 90%; max-width: 800px; border-radius: 10px; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 id="transcriptTitle">Video Transcript</h3>
+                <button class="btn btn-danger" id="deleteTranscriptBtn" style="padding: 0.5rem 1rem;">Delete Transcript</button>
+            </div>
+            <div id="transcriptContent" style="background: #f8f9fa; padding: 1rem; border-radius: 5px; white-space: pre-wrap; font-family: monospace; max-height: 400px; overflow-y: auto; border: 1px solid #ddd;"></div>
+            <div id="transcriptError" class="error-message" style="display: none; margin-top: 1rem;"></div>
+            <div style="margin-top: 1rem; text-align: center;">
+                <button class="btn btn-secondary" data-action="hide-modal" data-target="transcriptModal">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Comprehensive Preview Modal -->
+    <div id="comprehensivePreviewModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div class="modal-content" style="background: white; margin: 2% auto; padding: 0; width: 95%; max-width: 1200px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="padding: 1.5rem; border-bottom: 1px solid #ddd; display: flex; justify-content: between; align-items: center;">
+                <h3 id="previewModalTitle" style="margin: 0; color: #333;">Video Preview</h3>
+                <button class="btn btn-secondary" data-action="hide-modal" data-target="comprehensivePreviewModal" style="margin-left: auto;">Close</button>
+            </div>
+            <div class="modal-body" style="padding: 0;">
+                <!-- Video Section -->
+                <div class="preview-section" style="padding: 1.5rem; border-bottom: 1px solid #eee;">
+                    <h4 style="margin-bottom: 1rem; color: #495057; display: flex; align-items: center;">
+                        <i class="fas fa-play-circle" style="margin-right: 8px; color: #007bff;"></i>
+                        Video Content
+                    </h4>
+                    <div id="previewVideoContainer" style="position: relative; width: 100%; height: 400px; background: #000; border-radius: 8px; overflow: hidden;">
+                        <iframe id="previewVideoFrame" 
+                                style="width: 100%; height: 100%; border: none;" 
+                                allowfullscreen>
+                        </iframe>
+                        <div id="previewVideoError" class="error-message" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; text-align: center;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                            <p>Video not available</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Activity Section -->
+                <div class="preview-section" style="padding: 1.5rem; border-bottom: 1px solid #eee;">
+                    <h4 style="margin-bottom: 1rem; color: #495057; display: flex; align-items: center;">
+                        <i class="fas fa-tasks" style="margin-right: 8px; color: #28a745;"></i>
+                        Activity
+                    </h4>
+                    <div id="previewActivityContainer">
+                        <div id="previewActivityContent" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; border: 1px solid #dee2e6;">
+                            <!-- Activity content will be loaded here -->
+                        </div>
+                        <div id="previewActivityError" class="error-message" style="display: none; margin-top: 1rem; text-align: center; color: #6c757d;">
+                            <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                            No activity available for this video
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Test Section -->
+                <div class="preview-section" style="padding: 1.5rem;">
+                    <h4 style="margin-bottom: 1rem; color: #495057; display: flex; align-items: center;">
+                        <i class="fas fa-clipboard-check" style="margin-right: 8px; color: #ffc107;"></i>
+                        Test
+                    </h4>
+                    <div id="previewTestContainer">
+                        <div id="previewTestContent" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; border: 1px solid #dee2e6;">
+                            <!-- Test content will be loaded here -->
+                        </div>
+                        <div id="previewTestError" class="error-message" style="display: none; margin-top: 1rem; text-align: center; color: #6c757d;">
+                            <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                            No test available for this video
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../js/main.js"></script>
+    <script src="../js/admin-courses.js" defer></script>
+    <!-- Inline admin-courses logic moved to external file; legacy block commented out
+        /* Externalized to ../js/admin-courses.js
+        let currentUser = null;
+        let allCourses = [];
+        let allVideos = [];
+        let filteredCourses = [];
+        
+        // Load roles for dropdowns
+        async function loadRoles() {
+            try {
+                const roles = await LMSUtils.apiCall('/roles');
+                
+                // Populate role filter dropdown (exclude admin role)
+                const roleFilter = document.getElementById('roleFilter');
+                if (roleFilter) {
+                    // Clear existing options except the first one
+                    while (roleFilter.children.length > 1) {
+                        roleFilter.removeChild(roleFilter.lastChild);
+                    }
+                    
+                    // Add role options (exclude admin)
+                    roles.filter(role => role.name !== 'admin').forEach(role => {
+                        const option = document.createElement('option');
+                        option.value = role.name;
+                        option.textContent = role.name;
+                        roleFilter.appendChild(option);
+                    });
+                }
+                
+                // Populate course role name dropdown (exclude admin role)
+                const courseRoleName = document.getElementById('courseRoleName');
+                if (courseRoleName) {
+                    // Clear existing options except the first one
+                    while (courseRoleName.children.length > 1) {
+                        courseRoleName.removeChild(courseRoleName.lastChild);
+                    }
+                    
+                    // Add role options (exclude admin)
+                    roles.filter(role => role.name !== 'admin').forEach(role => {
+                        const option = document.createElement('option');
+                        option.value = role.name;
+                        option.textContent = role.name;
+                        courseRoleName.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load roles:', error);
+            }
+        }
+
+        // Initialize page
+        async function initCoursesPage() {
+            try {
+                currentUser = await LMSUtils.getCurrentUser();
+                
+                if (currentUser.role !== 'admin') {
+                    window.location.href = '/';
+                    return;
+                }
+                
+                document.getElementById('userName').textContent = currentUser.name;
+                
+                await loadRoles();
+                await loadCoursesData();
+                setupEventListeners();
+            } catch (error) {
+                console.error('Courses page initialization failed:', error);
+                window.location.href = '/';
+            }
+        }
+        
+        // Load courses data
+        async function loadCoursesData() {
+            try {
+                allCourses = await LMSUtils.apiCall('/courses');
+                filteredCourses = [...allCourses];
+                
+                // Load structure and videos for each course
+                for (let course of allCourses) {
+                    const structureData = await LMSUtils.apiCall(`/courses/${course.id}/structure`);
+                    const { structure: preparedStructure, lessons } = prepareCourseStructure(structureData);
+                    course.structure = preparedStructure;
+                    course.videos = lessons;
+                }
+                
+                updateStatistics();
+                renderCourses();
+            } catch (error) {
+                console.error('Failed to load courses data:', error);
+                LMSUtils.showNotification('Failed to load courses data', 'error');
+            }
+        }
+
+        function prepareCourseStructure(structure) {
+            if (!structure) {
+                return {
+                    structure: { levels: [], unassignedLessons: [] },
+                    lessons: []
+                };
+            }
+
+            const preparedLevels = (structure.levels || []).map((level, levelIndex) => {
+                const levelSequence = level.sequence ?? (levelIndex + 1);
+                const preparedChapters = (level.chapters || []).map((chapter, chapterIndex) => {
+                    const chapterSequence = chapter.sequence ?? (chapterIndex + 1);
+                    const preparedLessons = (chapter.lessons || []).map((lesson, lessonIndex) => ({
+                        ...lesson,
+                        level_id: level.id,
+                        level_title: level.title,
+                        level_sequence: levelSequence,
+                        chapter_id: chapter.id,
+                        chapter_title: chapter.title,
+                        chapter_sequence: chapterSequence,
+                        lesson_number: lessonIndex + 1
+                    }));
+                    return {
+                        ...chapter,
+                        sequence: chapterSequence,
+                        lessons: preparedLessons
+                    };
+                });
+                return {
+                    ...level,
+                    sequence: levelSequence,
+                    chapters: preparedChapters
+                };
+            });
+
+            const lessons = [];
+            preparedLevels.forEach(level => {
+                level.chapters.forEach(chapter => {
+                    chapter.lessons.forEach(lesson => lessons.push(lesson));
+                });
+            });
+
+            const unassigned = (structure.unassignedLessons || []).map((lesson, index) => ({
+                ...lesson,
+                level_id: null,
+                level_title: 'Unassigned',
+                level_sequence: 9999,
+                chapter_id: null,
+                chapter_title: 'Unassigned',
+                chapter_sequence: 9999,
+                lesson_number: index + 1
+            }));
+
+            lessons.push(...unassigned);
+
+            return {
+                structure: {
+                    ...structure,
+                    levels: preparedLevels,
+                    unassignedLessons: unassigned
+                },
+                lessons
+            };
+        }
+        
+        // Update statistics
+        async function updateStatistics() {
+            const totalCourses = allCourses.length;
+            const totalVideos = allCourses.reduce((sum, course) => sum + (course.videos?.length || 0), 0);
+            
+            document.getElementById('totalCourses').textContent = totalCourses;
+            document.getElementById('totalVideos').textContent = totalVideos;
+            
+            try {
+                // Get activities count
+                const activitiesResponse = await fetch('/api/activities/count');
+                const activitiesData = await activitiesResponse.json();
+                document.getElementById('totalActivities').textContent = activitiesData.count || 0;
+                
+                // Get enrolled students count
+                const studentsResponse = await fetch('/api/students/count');
+                const studentsData = await studentsResponse.json();
+                document.getElementById('enrolledStudents').textContent = studentsData.count || 0;
+            } catch (error) {
+                console.error('Failed to load statistics:', error);
+                document.getElementById('totalActivities').textContent = '0';
+                document.getElementById('enrolledStudents').textContent = '0';
+            }
+        }
+        
+        // Render courses
+        function renderCourses() {
+            const container = document.getElementById('coursesContainer');
+
+            if (filteredCourses.length === 0) {
+                container.innerHTML = '<p>No courses found.</p>';
+                return;
+            }
+
+            const coursesHTML = filteredCourses.map(course => {
+                const levelCount = course.structure?.levels?.length || 0;
+                const chapterCount = course.structure?.levels?.reduce((sum, level) => sum + (level.chapters?.length || 0), 0) || 0;
+                const lessonCount = course.videos?.length || 0;
+                const trainerName = course.trainer_name || 'Not Assigned';
+                const safeCourseTitle = JSON.stringify(course.title);
+
+                const videoItemsHtml = lessonCount > 0
+                    ? course.videos.map(video => {
+                        const safeVideoTitle = JSON.stringify(video.title);
+                        const safeGumletUrl = JSON.stringify(video.gumlet_url || '');
+                        const levelLabel = video.level_sequence && video.level_sequence !== 9999
+                            ? `Level ${video.level_sequence}: ${video.level_title}`
+                            : 'Unassigned Level';
+                        const chapterLabel = video.chapter_sequence && video.chapter_sequence !== 9999
+                            ? `Chapter ${video.level_sequence}.${video.chapter_sequence}: ${video.chapter_title}`
+                            : 'Unassigned Chapter';
+
+                        return `
+                            <div class="video-item" style="background: #f8f9fa; padding: 1rem; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong>${video.sequence}. ${video.title}</strong>
+                                    <br>
+                                    <small style="color: #666;">${levelLabel} • ${chapterLabel}</small>
+                                    <br>
+                                    <small style="color: #999;">${video.gumlet_url || ''}</small>
+                                </div>
+                                <div class="video-actions" style="position: relative; display: inline-block;">
+                                    <button class="btn btn-secondary" style="padding: 0.3rem 0.75rem;" onclick='toggleVideoDropdown(${video.id})'>Actions ▾</button>
+                                    <div class="dropdown-menu" id="videoDropdownMenu${video.id}" style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ddd; border-radius: 5px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); min-width: 180px; overflow: hidden;">
+                                        <a class="dropdown-item" href="#" onclick='transcribeVideo(${video.id}, ${safeVideoTitle}); hideVideoDropdown(${video.id})' style="display: block; padding: 0.5rem 1rem; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">Get Transcript</a>
+                                        <a class="dropdown-item" href="#" onclick='viewTranscript(${video.id}, ${safeVideoTitle}); hideVideoDropdown(${video.id})' style="display: block; padding: 0.5rem 1rem; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">View Transcript</a>
+                                        <a class="dropdown-item" href="#" onclick='generateAIContent(${video.id}, ${safeVideoTitle}); hideVideoDropdown(${video.id})' style="display: block; padding: 0.5rem 1rem; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">AI Generate</a>
+                                        <a class="dropdown-item" href="#" onclick='createTest(${video.id}, ${safeVideoTitle}); hideVideoDropdown(${video.id})' style="display: block; padding: 0.5rem 1rem; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">Create Test</a>
+                                        <a class="dropdown-item" href="#" onclick='addActivity(${video.id}, ${safeVideoTitle}); hideVideoDropdown(${video.id})' style="display: block; padding: 0.5rem 1rem; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">Add Activity</a>
+                                        <a class="dropdown-item" href="#" onclick='previewVideo(${video.id}, ${safeVideoTitle}, ${safeGumletUrl}); hideVideoDropdown(${video.id})' style="display: block; padding: 0.5rem 1rem; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">Preview</a>
+                                        <a class="dropdown-item" href="#" onclick='editVideo(${video.id}, ${safeVideoTitle}, ${safeGumletUrl}, ${video.sequence}, ${course.id}, ${video.level_id ?? 'null'}, ${video.chapter_id ?? 'null'}); hideVideoDropdown(${video.id})' style="display: block; padding: 0.5rem 1rem; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">Edit</a>
+                                        <a class="dropdown-item" href="#" onclick='confirmDeleteVideo(${video.id}, ${safeVideoTitle}); hideVideoDropdown(${video.id})' style="display: block; padding: 0.5rem 1rem; text-decoration: none; color: #dc3545;">Delete</a>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')
+                    : '<p style="color: #777; margin: 1rem 0;">No lessons in this course yet.</p>';
+
+                return `
+                    <div class="card" style="margin-bottom: 1rem;">
+                        <div class="flex justify-between align-center mb-1">
+                            <div>
+                                <h4>${course.title}</h4>
+                                <p style="color: #666; margin: 0.5rem 0;">
+                                    <strong>Role:</strong> ${course.role_name} |
+                                    <strong>Levels:</strong> ${levelCount} |
+                                    <strong>Chapters:</strong> ${chapterCount} |
+                                    <strong>Lessons:</strong> ${lessonCount} |
+                                    <strong>Created:</strong> ${LMSUtils.formatDate(course.created_at)} |
+                                    <strong>Trainer:</strong> ${trainerName}
+                                </p>
+                            </div>
+                            <div class="flex gap-1" style="flex-wrap: wrap; justify-content: flex-end;">
+                                <button class="btn btn-secondary" style="padding: 0.5rem 1rem;" onclick='addLevel(${course.id}, ${safeCourseTitle})'>Add Level</button>
+                                <button class="btn btn-secondary" style="padding: 0.5rem 1rem;" onclick='addChapter(${course.id}, ${safeCourseTitle})'>Add Chapter</button>
+                                <button class="btn btn-primary" style="padding: 0.5rem 1rem;" onclick='addVideo(${course.id}, ${safeCourseTitle})'>Add Lesson</button>
+                                <button class="btn btn-danger" style="padding: 0.5rem 1rem;" onclick='confirmDeleteCourse(${course.id}, ${safeCourseTitle})'>Delete Course</button>
+                            </div>
+                        </div>
+                        <div class="videos-list">
+                            <h5 style="margin: 1rem 0 0.5rem 0;">Lessons:</h5>
+                            <div style="display: grid; gap: 0.5rem;">
+                                ${videoItemsHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = coursesHTML;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Role filter
+            const roleFilter = document.getElementById('roleFilter');
+            roleFilter.addEventListener('change', filterCourses);
+        }
+        
+        // Filter courses
+        function filterCourses() {
+            const roleFilter = document.getElementById('roleFilter').value;
+            
+            filteredCourses = allCourses.filter(course => {
+                return !roleFilter || course.role_name === roleFilter;
+            });
+            
+            renderCourses();
+        }
+        
+        // Add video to course
+        function addVideo(courseId, courseTitle) {
+            const course = allCourses.find(c => c.id === courseId);
+            const levelSelect = document.getElementById('videoLevel');
+            const chapterSelect = document.getElementById('videoChapter');
+            const addVideoError = document.getElementById('addVideoError');
+
+            if (!course || !course.structure) {
+                LMSUtils.showNotification('Course structure not loaded yet. Please try again in a moment.', 'warning');
+                return;
+            }
+
+            if (!Array.isArray(course.structure.levels) || course.structure.levels.length === 0) {
+                LMSUtils.showNotification('Add a level before creating lessons.', 'warning');
+                addLevel(courseId, courseTitle);
+                return;
+            }
+
+            const hasChapters = course.structure.levels.some(level => Array.isArray(level.chapters) && level.chapters.length > 0);
+            if (!hasChapters) {
+                LMSUtils.showNotification('Add at least one chapter before creating lessons.', 'warning');
+                addChapter(courseId, courseTitle);
+                return;
+            }
+
+            document.getElementById('videoCourseId').value = courseId;
+            document.getElementById('addVideoTitle').textContent = `Add Video to ${courseTitle}`;
+            document.getElementById('videoSequence').value = (course.videos?.length || 0) + 1;
+
+            levelSelect.innerHTML = '<option value="">Select Level</option>';
+            chapterSelect.innerHTML = '<option value="">Select Chapter</option>';
+            addVideoError.style.display = 'none';
+
+            const updateChapterOptions = (levelId) => {
+                chapterSelect.innerHTML = '<option value="">Select Chapter</option>';
+                const selectedLevel = course.structure.levels.find(level => level.id === parseInt(levelId));
+                if (selectedLevel && Array.isArray(selectedLevel.chapters) && selectedLevel.chapters.length > 0) {
+                    selectedLevel.chapters.forEach(chapter => {
+                        const option = document.createElement('option');
+                        option.value = chapter.id;
+                        option.textContent = `Chapter ${selectedLevel.sequence}.${chapter.sequence}: ${chapter.title}`;
+                        chapterSelect.appendChild(option);
+                    });
+                    chapterSelect.disabled = false;
+                    chapterSelect.value = String(selectedLevel.chapters[0].id);
+                } else {
+                    chapterSelect.disabled = true;
+                    chapterSelect.value = '';
+                }
+            };
+
+            course.structure.levels.forEach(level => {
+                const option = document.createElement('option');
+                option.value = level.id;
+                option.textContent = `Level ${level.sequence}: ${level.title}`;
+                levelSelect.appendChild(option);
+            });
+
+            levelSelect.onchange = (event) => {
+                updateChapterOptions(event.target.value);
+                chapterSelect.value = '';
+            };
+
+            levelSelect.value = String(course.structure.levels[0].id);
+            updateChapterOptions(levelSelect.value);
+
+            document.getElementById('addVideoModal').style.display = 'block';
+        }
+
+        function addLevel(courseId, courseTitle) {
+            const course = allCourses.find(c => c.id === courseId);
+            document.getElementById('levelCourseId').value = courseId;
+            document.getElementById('addLevelTitle').textContent = `Add Level to ${courseTitle}`;
+            const nextSequence = (course?.structure?.levels?.length || 0) + 1;
+            document.getElementById('levelSequence').value = nextSequence;
+            document.getElementById('levelTitle').value = '';
+            document.getElementById('levelDescription').value = '';
+            document.getElementById('addLevelError').style.display = 'none';
+            document.getElementById('addLevelModal').style.display = 'block';
+        }
+
+        function hideAddLevelModal() {
+            document.getElementById('addLevelModal').style.display = 'none';
+            document.getElementById('addLevelForm').reset();
+            document.getElementById('addLevelError').style.display = 'none';
+        }
+
+        function addChapter(courseId, courseTitle) {
+            const course = allCourses.find(c => c.id === courseId);
+            if (!course || !course.structure || !course.structure.levels || course.structure.levels.length === 0) {
+                LMSUtils.showNotification('Please create a level before adding chapters.', 'warning');
+                return;
+            }
+
+            document.getElementById('chapterCourseId').value = courseId;
+            document.getElementById('addChapterTitle').textContent = `Add Chapter to ${courseTitle}`;
+            document.getElementById('chapterTitle').value = '';
+            document.getElementById('chapterDescription').value = '';
+            document.getElementById('addChapterError').style.display = 'none';
+
+            const levelSelect = document.getElementById('chapterLevelSelect');
+            levelSelect.innerHTML = '<option value="">Select Level</option>';
+
+            const updateChapterSequence = () => {
+                const selectedLevelId = parseInt(levelSelect.value);
+                const selectedLevel = course.structure.levels.find(level => level.id === selectedLevelId);
+                const nextSequence = selectedLevel ? (selectedLevel.chapters?.length || 0) + 1 : '';
+                document.getElementById('chapterSequence').value = nextSequence;
+            };
+
+            course.structure.levels.forEach(level => {
+                const option = document.createElement('option');
+                option.value = level.id;
+                option.textContent = `Level ${level.sequence}: ${level.title}`;
+                levelSelect.appendChild(option);
+            });
+
+            levelSelect.onchange = updateChapterSequence;
+            levelSelect.value = String(course.structure.levels[0].id);
+            updateChapterSequence();
+
+            document.getElementById('addChapterModal').style.display = 'block';
+        }
+
+        function hideAddChapterModal() {
+            document.getElementById('addChapterModal').style.display = 'none';
+            document.getElementById('addChapterForm').reset();
+            document.getElementById('addChapterError').style.display = 'none';
+            document.getElementById('chapterLevelSelect').innerHTML = '<option value="">Select Level</option>';
+        }
+        
+        // Create test for video
+        function createTest(videoId, videoTitle) {
+            document.getElementById('testVideoId').value = videoId;
+            document.getElementById('createTestTitle').textContent = `Create Test for ${videoTitle}`;
+            document.getElementById('testTitle').value = `${videoTitle} - Test`;
+            
+            // Clear previous questions
+            document.getElementById('questionsContainer').innerHTML = '';
+            
+            // Add first question
+            addQuestion();
+            
+            document.getElementById('createTestModal').style.display = 'block';
+        }
+        
+        // Add question to test
+        let questionCounter = 0;
+        function addQuestion() {
+            questionCounter++;
+            const container = document.getElementById('questionsContainer');
+            
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question-item';
+            questionDiv.style.cssText = 'border: 1px solid #ddd; padding: 1rem; margin-bottom: 1rem; border-radius: 5px; background: #f8f9fa;';
+            questionDiv.innerHTML = `
+                <div class="flex justify-between align-center mb-1">
+                    <h5>Question ${questionCounter}</h5>
+                    <button type="button" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick='removeQuestion(this)'>Remove</button>
+                </div>
+                <div class="form-group">
+                    <label>Question:</label>
+                    <input type="text" name="question_${questionCounter}" required placeholder="Enter your question..." style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 3px;">
+                </div>
+                <div class="form-group">
+                    <label>Option A:</label>
+                    <input type="text" name="option_a_${questionCounter}" required placeholder="Option A" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 3px;">
+                </div>
+                <div class="form-group">
+                    <label>Option B:</label>
+                    <input type="text" name="option_b_${questionCounter}" required placeholder="Option B" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 3px;">
+                </div>
+                <div class="form-group">
+                    <label>Option C:</label>
+                    <input type="text" name="option_c_${questionCounter}" required placeholder="Option C" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 3px;">
+                </div>
+                <div class="form-group">
+                    <label>Option D:</label>
+                    <input type="text" name="option_d_${questionCounter}" required placeholder="Option D" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 3px;">
+                </div>
+                <div class="form-group">
+                    <label>Correct Answer:</label>
+                    <select name="correct_answer_${questionCounter}" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 3px;">
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Points:</label>
+                    <input type="number" name="points_${questionCounter}" min="1" value="1" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 3px;">
+                </div>
+            `;
+            
+            container.appendChild(questionDiv);
+        }
+        
+        // Remove question
+        function removeQuestion(button) {
+            button.closest('.question-item').remove();
+        }
+
+        // Add activity to video
+        function addActivity(videoId, videoTitle) {
+            document.getElementById('activityVideoId').value = videoId;
+            document.getElementById('addActivityTitle').textContent = `Add Activity to ${videoTitle}`;
+            
+            // Set sample questions format
+            const sampleQuestions = [
+                {
+                    question: "Sample question?",
+                    options: ["Option A", "Option B", "Option C", "Option D"],
+                    correct: 0
+                }
+            ];
+            document.getElementById('activityQuestions').value = JSON.stringify(sampleQuestions, null, 2);
+            
+            document.getElementById('addActivityModal').style.display = 'block';
+        }
+        
+        // Enhanced preview video with activity and test
+        async function previewVideo(videoId, videoTitle, gumletUrl) {
+            try {
+                // Set modal title
+                document.getElementById('previewModalTitle').textContent = `Preview: ${videoTitle}`;
+                
+                // Show modal
+                document.getElementById('comprehensivePreviewModal').style.display = 'block';
+                
+                // Load video
+                loadPreviewVideo(gumletUrl);
+                
+                // Load activity and test data
+                await Promise.all([
+                    loadPreviewActivity(videoId),
+                    loadPreviewTest(videoId)
+                ]);
+                
+            } catch (error) {
+                console.error('Error loading preview:', error);
+                LMSUtils.showNotification('Failed to load preview content', 'error');
+            }
+        }
+        
+        // Load video in preview
+        function loadPreviewVideo(gumletUrl) {
+            const videoFrame = document.getElementById('previewVideoFrame');
+            const videoError = document.getElementById('previewVideoError');
+            
+            if (gumletUrl && gumletUrl.includes('gumlet.io')) {
+                videoFrame.src = gumletUrl;
+                videoFrame.style.display = 'block';
+                videoError.style.display = 'none';
+            } else {
+                videoFrame.style.display = 'none';
+                videoError.style.display = 'block';
+            }
+        }
+        
+        // Load activity data for preview
+        async function loadPreviewActivity(videoId) {
+            const activityContent = document.getElementById('previewActivityContent');
+            const activityError = document.getElementById('previewActivityError');
+            
+            try {
+                const response = await fetch(`/api/activities/video/${videoId}`);
+                
+                if (response.ok) {
+                    const activity = await response.json();
+                    
+                    let questionsHtml = '';
+                    if (activity.questions) {
+                        try {
+                            const questions = JSON.parse(activity.questions);
+                            if (questions && questions.length > 0) {
+                                questionsHtml = `
+                                    <h6 style="margin-top: 1rem; margin-bottom: 0.5rem; color: #495057;">Questions:</h6>
+                                    <ol style="margin: 0; padding-left: 1.5rem;">
+                                        ${questions.map(q => `<li style="margin-bottom: 0.5rem;">${q}</li>`).join('')}
+                                    </ol>
+                                `;
+                            }
+                        } catch (e) {
+                            console.warn('Could not parse activity questions:', e);
+                        }
+                    }
+                    
+                    activityContent.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                            <h5 style="margin: 0; color: #28a745;">${activity.title}</h5>
+                            <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick='deleteActivity(${activity.id}, ${videoId})'>
+                                <i class="fas fa-trash" style="margin-right: 4px;"></i>Delete
+                            </button>
+                        </div>
+                        <p style="margin: 0 0 1rem 0; color: #6c757d; line-height: 1.5;">${activity.description || 'No description available'}</p>
+                        ${questionsHtml}
+                    `;
+                    
+                    activityContent.style.display = 'block';
+                    activityError.style.display = 'none';
+                } else {
+                    activityContent.style.display = 'none';
+                    activityError.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading activity:', error);
+                activityContent.style.display = 'none';
+                activityError.style.display = 'block';
+            }
+        }
+        
+        // Load test data for preview
+        async function loadPreviewTest(videoId) {
+            const testContent = document.getElementById('previewTestContent');
+            const testError = document.getElementById('previewTestError');
+            
+            try {
+                const response = await fetch(`/api/tests/video/${videoId}`);
+                
+                if (response.ok) {
+                    const test = await response.json();
+                    
+                    let questionsHtml = '';
+                    if (test.questions && test.questions.length > 0) {
+                        questionsHtml = `
+                            <h6 style="margin-top: 1rem; margin-bottom: 0.5rem; color: #495057;">Questions (${test.questions.length}):</h6>
+                            <div style="margin: 0;">
+                                ${test.questions.map((q, index) => `
+                                    <div style="margin-bottom: 1rem; padding: 1rem; background: white; border-radius: 5px; border: 1px solid #e9ecef;">
+                                        <p style="margin: 0 0 0.5rem 0; font-weight: 500; color: #495057;">${index + 1}. ${q.question}</p>
+                                        <div style="margin-left: 1rem;">
+                                            <p style="margin: 0.25rem 0; color: #6c757d;">A) ${q.option_a}</p>
+                                            <p style="margin: 0.25rem 0; color: #6c757d;">B) ${q.option_b}</p>
+                                            <p style="margin: 0.25rem 0; color: #6c757d;">C) ${q.option_c}</p>
+                                            <p style="margin: 0.25rem 0; color: #6c757d;">D) ${q.option_d}</p>
+                                            <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #28a745; font-weight: 500;">Points: ${q.points || 1}</p>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    }
+                    
+                    testContent.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                            <h5 style="margin: 0; color: #ffc107;">${test.title}</h5>
+                            <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick='deleteTest(${test.id}, ${videoId})'>
+                                <i class="fas fa-trash" style="margin-right: 4px;"></i>Delete
+                            </button>
+                        </div>
+                        <p style="margin: 0 0 1rem 0; color: #6c757d; line-height: 1.5;">${test.description || 'No description available'}</p>
+                        ${questionsHtml}
+                    `;
+                    
+                    testContent.style.display = 'block';
+                    testError.style.display = 'none';
+                } else {
+                    testContent.style.display = 'none';
+                    testError.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading test:', error);
+                testContent.style.display = 'none';
+                testError.style.display = 'block';
+            }
+        }
+        
+        // Hide comprehensive preview modal
+        function hideComprehensivePreviewModal() {
+            document.getElementById('comprehensivePreviewModal').style.display = 'none';
+            // Clear video iframe to stop playback
+            document.getElementById('previewVideoFrame').src = '';
+        }
+        
+        // View course details
+        function viewCourse(courseId) {
+            const course = allCourses.find(c => c.id === courseId);
+            if (course) {
+                LMSUtils.showNotification(`Viewing ${course.title} - ${course.videos?.length || 0} videos`, 'info');
+            }
+        }
+        
+        // Modal functions
+        async function showCreateCourseModal() {
+            document.getElementById('createCourseModal').style.display = 'block';
+            await loadTrainersForCourse();
+        }
+        
+        async function loadTrainersForCourse() {
+            try {
+                const users = await LMSUtils.apiCall('/users');
+                const trainers = users.filter(user => user.role === 'trainer');
+                
+                const trainerSelect = document.getElementById('courseTrainer');
+                // Clear existing options except the first one
+                while (trainerSelect.children.length > 1) {
+                    trainerSelect.removeChild(trainerSelect.lastChild);
+                }
+                
+                // Add trainer options
+                trainers.forEach(trainer => {
+                    const option = document.createElement('option');
+                    option.value = trainer.id;
+                    option.textContent = trainer.name;
+                    trainerSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Failed to load trainers:', error);
+            }
+        }
+        
+        function hideCreateCourseModal() {
+            document.getElementById('createCourseModal').style.display = 'none';
+            document.getElementById('createCourseForm').reset();
+            document.getElementById('createCourseError').style.display = 'none';
+        }
+        
+        function hideAddVideoModal() {
+            document.getElementById('addVideoModal').style.display = 'none';
+            document.getElementById('addVideoForm').reset();
+            document.getElementById('addVideoError').style.display = 'none';
+            document.getElementById('videoLevel').innerHTML = '<option value="">Select Level</option>';
+            document.getElementById('videoChapter').innerHTML = '<option value="">Select Chapter</option>';
+        }
+        
+        function hideCreateTestModal() {
+            document.getElementById('createTestModal').style.display = 'none';
+            document.getElementById('createTestForm').reset();
+            document.getElementById('createTestError').style.display = 'none';
+            document.getElementById('questionsContainer').innerHTML = '';
+            questionCounter = 0;
+        }
+        
+        function hideAddActivityModal() {
+            document.getElementById('addActivityModal').style.display = 'none';
+            document.getElementById('addActivityForm').reset();
+            document.getElementById('addActivityError').style.display = 'none';
+        }
+        
+        function hideEditVideoModal() {
+            document.getElementById('editVideoModal').style.display = 'none';
+            document.getElementById('editVideoForm').reset();
+            document.getElementById('editVideoError').style.display = 'none';
+            document.getElementById('editVideoLevel').innerHTML = '<option value="">Select Level</option>';
+            document.getElementById('editVideoChapter').innerHTML = '<option value="">Select Chapter</option>';
+        }
+        
+        function hideDeleteVideoModal() {
+            document.getElementById('deleteVideoModal').style.display = 'none';
+            videoToDelete = null;
+        }
+        
+        // Video management functions
+        function editVideo(videoId, title, gumletUrl, sequence, courseId, levelId, chapterId) {
+            document.getElementById('editVideoId').value = videoId;
+            document.getElementById('editVideoTitleInput').value = title;
+            document.getElementById('editGumletUrl').value = gumletUrl;
+            document.getElementById('editVideoSequence').value = sequence;
+            document.getElementById('editVideoTitle').textContent = `Edit Video: ${title}`;
+            document.getElementById('editVideoError').style.display = 'none';
+
+            const course = allCourses.find(c => c.id === courseId);
+            const levelSelect = document.getElementById('editVideoLevel');
+            const chapterSelect = document.getElementById('editVideoChapter');
+
+            levelSelect.innerHTML = '<option value="">Select Level</option>';
+            chapterSelect.innerHTML = '<option value="">Select Chapter</option>';
+
+            if (!course || !course.structure || !course.structure.levels || course.structure.levels.length === 0) {
+                LMSUtils.showNotification('Please create a level and chapter before editing lessons.', 'warning');
+                document.getElementById('editVideoModal').style.display = 'none';
+                return;
+            }
+
+            const updateChapterOptions = (selectedLevelId) => {
+                chapterSelect.innerHTML = '<option value="">Select Chapter</option>';
+                const selectedLevel = course.structure.levels.find(level => level.id === parseInt(selectedLevelId));
+                if (selectedLevel) {
+                    selectedLevel.chapters.forEach(chapter => {
+                        const option = document.createElement('option');
+                        option.value = chapter.id;
+                        option.textContent = `Chapter ${selectedLevel.sequence}.${chapter.sequence}: ${chapter.title}`;
+                        chapterSelect.appendChild(option);
+                    });
+                    chapterSelect.disabled = selectedLevel.chapters.length === 0;
+                } else {
+                    chapterSelect.disabled = true;
+                }
+            };
+
+            course.structure.levels.forEach(level => {
+                const option = document.createElement('option');
+                option.value = level.id;
+                option.textContent = `Level ${level.sequence}: ${level.title}`;
+                levelSelect.appendChild(option);
+            });
+
+            levelSelect.onchange = (event) => {
+                updateChapterOptions(event.target.value);
+                chapterSelect.value = '';
+            };
+
+            const initialLevelId = parsedLevelId || course.structure.levels[0].id;
+            levelSelect.value = String(initialLevelId);
+            updateChapterOptions(initialLevelId);
+            chapterSelect.disabled = chapterSelect.options.length <= 1;
+            chapterSelect.value = parsedChapterId ? String(parsedChapterId) : '';
+
+            document.getElementById('editVideoModal').style.display = 'block';
+        }
+        
+        let videoToDelete = null;
+        
+        function confirmDeleteVideo(videoId, videoTitle) {
+            videoToDelete = videoId;
+            document.getElementById('deleteVideoMessage').textContent = 
+                `Are you sure you want to delete "${videoTitle}"? This action cannot be undone and will remove all associated tests, activities, and student progress for this video.`;
+            document.getElementById('deleteVideoModal').style.display = 'block';
+        }
+        
+        async function deleteVideo() {
+            if (!videoToDelete) return;
+            
+            try {
+                await LMSUtils.apiCall(`/videos/${videoToDelete}`, {
+                    method: 'DELETE'
+                });
+                
+                LMSUtils.showNotification('Video deleted successfully', 'success');
+                hideDeleteVideoModal();
+                loadCoursesData();
+            } catch (error) {
+                LMSUtils.showNotification(`Failed to delete video: ${error.message}`, 'error');
+            }
+        }
+        
+        // Form handlers
+        document.getElementById('createCourseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const courseData = Object.fromEntries(formData.entries());
+            
+            try {
+                await LMSUtils.apiCall('/courses', {
+                    method: 'POST',
+                    body: JSON.stringify(courseData)
+                });
+                
+                LMSUtils.showNotification('Course created successfully', 'success');
+                hideCreateCourseModal();
+                loadCoursesData();
+            } catch (error) {
+                document.getElementById('createCourseError').textContent = error.message;
+                document.getElementById('createCourseError').style.display = 'block';
+            }
+        });
+        
+        document.getElementById('addVideoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const videoData = Object.fromEntries(formData.entries());
+            
+            // Validate Gumlet URL
+            if (!videoData.gumlet_url || !videoData.gumlet_url.includes('gumlet.io')) {
+                document.getElementById('addVideoError').textContent = 'Please enter a valid Gumlet URL';
+                document.getElementById('addVideoError').style.display = 'block';
+                return;
+            }
+
+            if (!videoData.chapter_id) {
+                document.getElementById('addVideoError').textContent = 'Please select a chapter for this lesson';
+                document.getElementById('addVideoError').style.display = 'block';
+                return;
+            }
+            
+            try {
+                console.log('Sending video data:', videoData);
+                await LMSUtils.apiCall('/videos', {
+                    method: 'POST',
+                    body: JSON.stringify(videoData)
+                });
+                
+                LMSUtils.showNotification('Video added successfully', 'success');
+                hideAddVideoModal();
+                loadCoursesData();
+            } catch (error) {
+                document.getElementById('addVideoError').textContent = error.message;
+                document.getElementById('addVideoError').style.display = 'block';
+            }
+        });
+
+        document.getElementById('addLevelForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const courseId = parseInt(formData.get('course_id'));
+            const payload = {
+                title: formData.get('title'),
+                description: formData.get('description') || null
+            };
+
+            const sequenceValue = formData.get('sequence');
+            if (sequenceValue) {
+                payload.sequence = parseInt(sequenceValue);
+            }
+
+            if (!payload.title) {
+                document.getElementById('addLevelError').textContent = 'Level title is required';
+                document.getElementById('addLevelError').style.display = 'block';
+                return;
+            }
+
+            try {
+                await LMSUtils.apiCall(`/courses/${courseId}/levels`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                LMSUtils.showNotification('Level added successfully', 'success');
+                hideAddLevelModal();
+                loadCoursesData();
+            } catch (error) {
+                document.getElementById('addLevelError').textContent = error.message;
+                document.getElementById('addLevelError').style.display = 'block';
+            }
+        });
+
+        document.getElementById('addChapterForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const levelId = parseInt(formData.get('level_id'));
+            const payload = {
+                title: formData.get('title'),
+                description: formData.get('description') || null
+            };
+
+            const sequenceValue = formData.get('sequence');
+            if (sequenceValue) {
+                payload.sequence = parseInt(sequenceValue);
+            }
+
+            if (!levelId) {
+                document.getElementById('addChapterError').textContent = 'Please select a level';
+                document.getElementById('addChapterError').style.display = 'block';
+                return;
+            }
+
+            if (!payload.title) {
+                document.getElementById('addChapterError').textContent = 'Chapter title is required';
+                document.getElementById('addChapterError').style.display = 'block';
+                return;
+            }
+
+            try {
+                await LMSUtils.apiCall(`/levels/${levelId}/chapters`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                LMSUtils.showNotification('Chapter added successfully', 'success');
+                hideAddChapterModal();
+                loadCoursesData();
+            } catch (error) {
+                document.getElementById('addChapterError').textContent = error.message;
+                document.getElementById('addChapterError').style.display = 'block';
+            }
+        });
+
+        document.getElementById('createTestForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const testData = {
+                videoId: parseInt(formData.get('videoId')),
+                title: formData.get('title'),
+                description: formData.get('description'),
+                passingScore: parseInt(formData.get('passingScore')) || 70,
+                questions: []
+            };
+            
+            // Collect questions
+            const questionItems = document.querySelectorAll('.question-item');
+            questionItems.forEach((item) => {
+                // Find the actual question number from the input names
+                const questionInput = item.querySelector('input[name^="question_"]');
+                if (!questionInput) return;
+                
+                const questionNum = questionInput.name.split('_')[1];
+                const question = {
+                    question: item.querySelector(`input[name="question_${questionNum}"]`)?.value,
+                    option_a: item.querySelector(`input[name="option_a_${questionNum}"]`)?.value,
+                    option_b: item.querySelector(`input[name="option_b_${questionNum}"]`)?.value,
+                    option_c: item.querySelector(`input[name="option_c_${questionNum}"]`)?.value,
+                    option_d: item.querySelector(`input[name="option_d_${questionNum}"]`)?.value,
+                    correct_answer: item.querySelector(`select[name="correct_answer_${questionNum}"]`)?.value,
+                    points: parseInt(item.querySelector(`input[name="points_${questionNum}"]`)?.value) || 1
+                };
+                
+                if (question.question && question.option_a && question.option_b && question.correct_answer) {
+                    testData.questions.push(question);
+                }
+            });
+            
+            if (testData.questions.length === 0) {
+                document.getElementById('createTestError').textContent = 'Please add at least one question';
+                document.getElementById('createTestError').style.display = 'block';
+                return;
+            }
+            
+            try {
+                 await LMSUtils.apiCall('/tests', {
+                     method: 'POST',
+                     body: JSON.stringify(testData)
+                 });
+                
+                LMSUtils.showNotification('Test created successfully', 'success');
+                hideCreateTestModal();
+                loadCoursesData();
+            } catch (error) {
+                document.getElementById('createTestError').textContent = error.message;
+                document.getElementById('createTestError').style.display = 'block';
+            }
+        });
+        
+        document.getElementById('addActivityForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const activityData = Object.fromEntries(formData.entries());
+            
+            // Validate JSON questions
+            try {
+                if (activityData.questions) {
+                    JSON.parse(activityData.questions);
+                }
+            } catch (jsonError) {
+                document.getElementById('addActivityError').textContent = 'Invalid JSON format for questions';
+                document.getElementById('addActivityError').style.display = 'block';
+                return;
+            }
+            
+            try {
+                await LMSUtils.apiCall('/activities', {
+                    method: 'POST',
+                    body: JSON.stringify(activityData)
+                });
+                
+                LMSUtils.showNotification('Activity added successfully', 'success');
+                hideAddActivityModal();
+                loadCoursesData();
+            } catch (error) {
+                document.getElementById('addActivityError').textContent = error.message;
+                document.getElementById('addActivityError').style.display = 'block';
+            }
+        });
+        
+        // Delete course functions
+        let courseToDelete = null;
+        
+        function confirmDeleteCourse(courseId, courseTitle) {
+            courseToDelete = courseId;
+            document.getElementById('deleteCourseMessage').textContent = 
+                `Are you sure you want to delete "${courseTitle}"? This action cannot be undone and will remove all videos, activities, tests, and student progress associated with this course.`;
+            document.getElementById('deleteCourseModal').style.display = 'block';
+        }
+        
+        function hideDeleteCourseModal() {
+            document.getElementById('deleteCourseModal').style.display = 'none';
+            courseToDelete = null;
+        }
+        
+        async function deleteCourse() {
+            if (!courseToDelete) return;
+            
+            try {
+                await LMSUtils.apiCall(`/courses/${courseToDelete}`, {
+                    method: 'DELETE'
+                });
+                
+                LMSUtils.showNotification('Course deleted successfully', 'success');
+                hideDeleteCourseModal();
+                loadCoursesData();
+            } catch (error) {
+                LMSUtils.showNotification(`Failed to delete course: ${error.message}`, 'error');
+            }
+        }
+        
+        // Setup delete button event listener
+        document.getElementById('confirmDeleteCourseBtn').addEventListener('click', deleteCourse);
+        document.getElementById('confirmDeleteVideoBtn').addEventListener('click', deleteVideo);
+        
+        // Video dropdown functions
+        function toggleVideoDropdown(videoId) {
+            const dropdown = document.getElementById(`videoDropdownMenu${videoId}`);
+            const isVisible = dropdown.style.display === 'block';
+            
+            // Hide all other dropdowns first
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                menu.style.display = 'none';
+            });
+            
+            // Toggle current dropdown
+            dropdown.style.display = isVisible ? 'none' : 'block';
+        }
+        
+        function hideVideoDropdown(videoId) {
+            const dropdown = document.getElementById(`videoDropdownMenu${videoId}`);
+            dropdown.style.display = 'none';
+        }
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.video-actions')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.style.display = 'none';
+                });
+            }
+        });
+        
+        // Edit video form handler
+        document.getElementById('editVideoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const videoData = Object.fromEntries(formData.entries());
+            const videoId = videoData.video_id;
+            
+            // Remove video_id from the data object as it's not needed in the request body
+            delete videoData.video_id;
+            
+            // Validate Gumlet URL
+            if (!videoData.gumlet_url || !videoData.gumlet_url.includes('gumlet.io')) {
+                document.getElementById('editVideoError').textContent = 'Please enter a valid Gumlet URL';
+                document.getElementById('editVideoError').style.display = 'block';
+                return;
+            }
+
+            if (!videoData.chapter_id) {
+                document.getElementById('editVideoError').textContent = 'Please select a chapter for this lesson';
+                document.getElementById('editVideoError').style.display = 'block';
+                return;
+            }
+            
+            try {
+                await LMSUtils.apiCall(`/videos/${videoId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(videoData)
+                });
+                
+                LMSUtils.showNotification('Video updated successfully', 'success');
+                hideEditVideoModal();
+                loadCoursesData();
+            } catch (error) {
+                document.getElementById('editVideoError').textContent = error.message;
+                document.getElementById('editVideoError').style.display = 'block';
+            }
+        });
+        
+        // AI Functions
+        async function transcribeVideo(videoId, videoTitle) {
+            if (!confirm(`Get transcript from Gumlet for "${videoTitle}"? This will retrieve subtitles if available.`)) {
+                return;
+            }
+            
+            try {
+                LMSUtils.showNotification('Retrieving transcript from Gumlet...', 'info');
+                
+                const response = await LMSUtils.apiCall(`/videos/${videoId}/transcribe`, {
+                    method: 'POST'
+                });
+                
+                LMSUtils.showNotification('Transcript retrieved successfully from Gumlet', 'success');
+            } catch (error) {
+                LMSUtils.showNotification(`Failed to retrieve transcript: ${error.message}`, 'error');
+            }
+        }
+        
+        async function generateAIContent(videoId, videoTitle) {
+            document.getElementById('aiVideoId').value = videoId;
+            document.getElementById('generateAITitle').textContent = `Generate AI Content for ${videoTitle}`;
+            document.getElementById('generateAIModal').style.display = 'block';
+        }
+        
+        async function generateContent(contentType) {
+            const videoId = document.getElementById('aiVideoId').value;
+            const generateBtn = event.target;
+            const originalText = generateBtn.innerHTML;
+            
+            try {
+                // Show progress indicator
+                generateBtn.innerHTML = '<span class="spinner"></span> Generating...';
+                generateBtn.disabled = true;
+                
+                // Disable all buttons in modal
+                const allBtns = document.querySelectorAll('#generateAIModal button');
+                allBtns.forEach(btn => btn.disabled = true);
+                
+                LMSUtils.showNotification(`Generating AI ${contentType}...`, 'info');
+                
+                const response = await LMSUtils.apiCall(`/videos/${videoId}/generate-content`, {
+                    method: 'POST',
+                    body: JSON.stringify({ contentType: contentType })
+                });
+                
+                LMSUtils.showNotification(`AI ${contentType} generated successfully and sent for review! Click "AI Content Review" to approve it.`, 'success');
+                hideGenerateAIModal();
+                
+                // Update pending count
+                updatePendingCount();
+                
+            } catch (error) {
+                LMSUtils.showNotification(`Failed to generate ${contentType}: ${error.message}`, 'error');
+                generateBtn.innerHTML = originalText;
+            } finally {
+                // Re-enable all buttons
+                const allBtns = document.querySelectorAll('#generateAIModal button');
+                allBtns.forEach(btn => {
+                    btn.disabled = false;
+                    if (btn === generateBtn) {
+                        btn.innerHTML = originalText;
+                    }
+                });
+            }
+        }
+        
+        function hideGenerateAIModal() {
+            document.getElementById('generateAIModal').style.display = 'none';
+        }
+        
+        // Transcript Functions
+        async function viewTranscript(videoId, videoTitle) {
+            try {
+                const response = await LMSUtils.apiCall(`/videos/${videoId}/transcript`);
+                
+                if (!response.transcript_text) {
+                    LMSUtils.showNotification('No transcript found for this video', 'info');
+                    return;
+                }
+                
+                document.getElementById('transcriptTitle').textContent = `Transcript for "${videoTitle}"`;
+                document.getElementById('transcriptContent').textContent = response.transcript_text;
+                document.getElementById('transcriptError').style.display = 'none';
+                
+                // Store video ID for delete function
+                document.getElementById('deleteTranscriptBtn').setAttribute('data-video-id', videoId);
+                document.getElementById('deleteTranscriptBtn').setAttribute('data-video-title', videoTitle);
+                
+                document.getElementById('transcriptModal').style.display = 'block';
+            } catch (error) {
+                LMSUtils.showNotification(`Failed to load transcript: ${error.message}`, 'error');
+            }
+        }
+        
+        function hideTranscriptModal() {
+            document.getElementById('transcriptModal').style.display = 'none';
+        }
+        
+        async function deleteTranscript() {
+            const videoId = document.getElementById('deleteTranscriptBtn').getAttribute('data-video-id');
+            const videoTitle = document.getElementById('deleteTranscriptBtn').getAttribute('data-video-title');
+            
+            if (!confirm(`Are you sure you want to delete the transcript for "${videoTitle}"? This action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                await LMSUtils.apiCall(`/videos/${videoId}/transcript`, {
+                    method: 'DELETE'
+                });
+                
+                LMSUtils.showNotification('Transcript deleted successfully', 'success');
+                hideTranscriptModal();
+            } catch (error) {
+                document.getElementById('transcriptError').textContent = error.message;
+                document.getElementById('transcriptError').style.display = 'block';
+            }
+        }
+        
+        // Add event listener for delete transcript button
+         document.getElementById('deleteTranscriptBtn').addEventListener('click', deleteTranscript);
+        
+        async function viewPendingAIContent(suppressNoContentNotification = false) {
+            try {
+                const pendingContent = await LMSUtils.apiCall('/ai-content/pending');
+                
+                if (pendingContent.length === 0) {
+                    if (!suppressNoContentNotification) {
+                        LMSUtils.showNotification('No pending AI content for review', 'info');
+                    }
+                    displayPendingContent(pendingContent); // Show the empty state UI
+                    return;
+                }
+                
+                displayPendingContent(pendingContent);
+                document.getElementById('aiReviewModal').style.display = 'block';
+            } catch (error) {
+                LMSUtils.showNotification(`Failed to load pending content: ${error.message}`, 'error');
+            }
+        }
+        
+        function displayPendingContent(content) {
+            const container = document.getElementById('pendingContentContainer');
+            
+            if (content.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-info" style="text-align: center; padding: 2rem;">
+                        <h4><i class="fas fa-info-circle"></i> No Pending AI Content</h4>
+                        <p>AI-generated content will appear here for your review and approval.</p>
+                        <hr>
+                        <h5>How to Generate AI Content:</h5>
+                        <ol style="text-align: left; display: inline-block;">
+                            <li>Navigate to any course with videos</li>
+                            <li>Click the <strong>"Generate AI Content"</strong> button next to a video</li>
+                            <li>Select content type: <strong>Test</strong> or <strong>Activity</strong></li>
+                            <li>Wait for the AI to process (progress indicator will show)</li>
+                            <li>Return here to review and approve the generated content</li>
+                        </ol>
+                        <p><small class="text-muted">💡 Tip: Approved content becomes available to students immediately</small></p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const contentHTML = content.map(item => `
+                <div class="ai-content-item" style="border: 2px solid #ffc107; padding: 1.5rem; margin-bottom: 1.5rem; border-radius: 8px; background: #fffbf0;">
+                    <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 1rem;">
+                        <h4 style="color: #856404; margin: 0;">
+                            <i class="fas fa-robot"></i> ${item.content_type.toUpperCase()}
+                            <small style="color: #6c757d; font-weight: normal;"> • from video: "${item.video_title}"</small>
+                        </h4>
+                        <span class="badge" style="background: #ffc107; color: #212529;">PENDING REVIEW</span>
+                    </div>
+                    <p style="margin-bottom: 1rem;"><strong><i class="fas fa-clock"></i> Generated:</strong> ${LMSUtils.formatDate(item.created_at)}</p>
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px; margin: 1rem 0; max-height: 300px; overflow-y: auto; border-left: 4px solid #007bff;">
+                        <pre style="white-space: pre-wrap; font-family: inherit; margin: 0; font-size: 14px;">${JSON.stringify(JSON.parse(item.generated_content), null, 2)}</pre>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-success" onclick='reviewAIContent(${item.id}, 'approve')' style="flex: 1; min-width: 120px;">
+                            <i class="fas fa-check"></i> Approve & Publish
+                        </button>
+                        <button class="btn btn-danger" onclick='reviewAIContent(${item.id}, 'reject')' style="flex: 1; min-width: 120px;">
+                            <i class="fas fa-times"></i> Reject
+                        </button>
+                        <button class="btn btn-warning" onclick='requestContentUpdate(${item.id})' style="flex: 1; min-width: 120px;">
+                            <i class="fas fa-edit"></i> Request Update
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = contentHTML;
+        }
+        
+        async function reviewAIContent(contentId, status) {
+            try {
+                await LMSUtils.apiCall(`/ai-content/${contentId}/review`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ action: status })
+                });
+                
+                LMSUtils.showNotification(`Content ${status === 'approve' ? 'approved and published' : status} successfully!`, 'success');
+                viewPendingAIContent(true); // Refresh the list, suppress no content notification
+                updatePendingCount(); // Update the badge count
+            } catch (error) {
+                LMSUtils.showNotification(`Failed to ${status} content: ${error.message}`, 'error');
+            }
+        }
+        
+        async function requestContentUpdate(contentId) {
+            const feedback = prompt('Enter feedback for content update:');
+            if (!feedback) return;
+            
+            try {
+                await LMSUtils.apiCall(`/ai-content/${contentId}/request-update`, {
+                    method: 'POST',
+                    body: JSON.stringify({ updateReason: feedback })
+                });
+                
+                LMSUtils.showNotification('Update request submitted successfully', 'success');
+            } catch (error) {
+                LMSUtils.showNotification(`Failed to request update: ${error.message}`, 'error');
+            }
+        }
+        
+        function hideAIReviewModal() {
+            document.getElementById('aiReviewModal').style.display = 'none';
+        }
+        
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
+        });
+        
+        // Delete activity function
+        async function deleteActivity(activityId, videoId) {
+            if (!confirm('Are you sure you want to delete this activity? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                await LMSUtils.apiCall(`/activities/${activityId}`, {
+                    method: 'DELETE'
+                });
+                
+                LMSUtils.showNotification('Activity deleted successfully', 'success');
+                
+                // Reload the activity section
+                await loadPreviewActivity(videoId);
+            } catch (error) {
+                console.error('Error deleting activity:', error);
+                LMSUtils.showNotification('Failed to delete activity: ' + error.message, 'error');
+            }
+        }
+        
+        // Delete test function
+        async function deleteTest(testId, videoId) {
+            if (!confirm('Are you sure you want to delete this test? This action cannot be undone and will remove all student progress for this test.')) {
+                return;
+            }
+            
+            try {
+                await LMSUtils.apiCall(`/tests/${testId}`, {
+                    method: 'DELETE'
+                });
+                
+                LMSUtils.showNotification('Test deleted successfully', 'success');
+                
+                // Reload the test section
+                await loadPreviewTest(videoId);
+            } catch (error) {
+                console.error('Error deleting test:', error);
+                LMSUtils.showNotification('Failed to delete test: ' + error.message, 'error');
+            }
+        }
+
+        // Update pending AI content count
+        async function updatePendingCount() {
+            try {
+                const pendingContent = await LMSUtils.apiCall('/ai-content/pending');
+                const count = pendingContent.length;
+                const badge = document.getElementById('pendingCount');
+                
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'inline';
+                    document.getElementById('reviewAIBtn').classList.add('btn-warning');
+                    document.getElementById('reviewAIBtn').classList.remove('btn-success');
+                } else {
+                    badge.style.display = 'none';
+                    document.getElementById('reviewAIBtn').classList.add('btn-success');
+                    document.getElementById('reviewAIBtn').classList.remove('btn-warning');
+                }
+            } catch (error) {
+                console.error('Failed to update pending count:', error);
+            }
+        }
+        
+        // Initialize page when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initCoursesPage();
+            updatePendingCount(); // Load initial pending count
+        });
+    -->
+</body>
+</html>
