@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - AHL Sales Trainer</title>
+    <link rel="icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/js/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/js/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/js/apple-touch-icon.png">
+    <link href="css/output.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); }
+        .score-badge { display: inline-flex; align-items: center; padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 600; font-size: 0.75rem; letter-spacing: 0.025em; text-transform: uppercase; }
+        .score-excellent { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .score-good { background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+        .score-fair { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .score-poor { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.6); }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans antialiased overflow-hidden flex">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="hidden md:flex md:w-64 bg-white border-r border-gray-200 flex-col shrink-0 z-30 transition-all duration-300">
+        <!-- Logo -->
+        <div class="h-16 flex items-center px-6 border-b border-gray-100">
+            <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-lg mr-3 shadow-lg shadow-indigo-200">📊</div>
+            <span class="font-bold text-slate-900 text-lg tracking-tight">Sales Trainer</span>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1">
+            <button onclick="switchSection('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-indigo-50 text-indigo-600 font-medium transition-colors group">
+                <svg class="w-5 h-5 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                Dashboard
+            </button>
+            <button onclick="switchSection('content')" id="nav-content" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-gray-50 hover:text-indigo-600 font-medium transition-colors group">
+                <svg class="w-5 h-5 text-slate-400 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                Content Library
+            </button>
+            <button onclick="switchSection('users')" id="nav-users" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-gray-50 hover:text-indigo-600 font-medium transition-colors group">
+                <svg class="w-5 h-5 text-slate-400 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                User Management
+            </button>
+            <button onclick="switchSection('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-gray-50 hover:text-indigo-600 font-medium transition-colors group">
+                <svg class="w-5 h-5 text-slate-400 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Settings
+            </button>
+            <a href="/trainer.html" target="_blank" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-gray-50 hover:text-indigo-600 font-medium transition-colors group">
+                <svg class="w-5 h-5 text-slate-400 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                View as Candidate
+            </a>
+        </nav>
+
+        <!-- User Profile -->
+        <div class="p-4 border-t border-gray-100">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs" id="admin-avatar">AD</div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-900 truncate" id="admin-name">Admin</p>
+                    <p class="text-xs text-slate-500 truncate">Administrator</p>
+                </div>
+            </div>
+            <button id="logout-btn" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-xs font-medium text-slate-600 hover:bg-gray-50 hover:text-red-600 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                Sign Out
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-slate-50 relative h-screen">
+        <!-- Header -->
+        <header class="h-16 bg-white border-b border-gray-200 sticky top-0 z-20 px-6 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button id="mobile-menu-btn" class="md:hidden px-3 py-2 bg-white border border-gray-200 rounded-lg text-slate-700 hover:bg-gray-50" title="Menu">☰</button>
+                <h1 id="page-title" class="text-xl font-bold text-slate-800">Dashboard Overview</h1>
+            </div>
+            <div id="simple-search-container" class="hidden md:flex items-center gap-2">
+                <div class="relative w-64">
+                    <label for="search-input" class="sr-only">Search candidates</label>
+                    <input type="text" id="search-input" placeholder="Search candidates..."
+                        class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none text-sm">
+                    <span class="absolute left-3 top-2.5 text-slate-400">🔍</span>
+                </div>
+                <button id="search-btn" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100 text-sm">Search</button>
+                <button id="refresh-btn" class="px-3 py-2 bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 transition-all shadow-sm text-sm" title="Refresh">🔄</button>
+            </div>
+        </header>
+        <!-- Mobile Search Bar -->
+        <div id="mobile-search" class="md:hidden px-6 pt-3">
+            <div class="flex items-center gap-2">
+                <div class="relative flex-1">
+                    <label for="mobile-search-input" class="sr-only">Search candidates</label>
+                    <input type="text" id="mobile-search-input" placeholder="Search candidates..."
+                        class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
+                    <span class="absolute left-3 top-2.5 text-slate-400">🔍</span>
+                </div>
+                <button id="mobile-search-btn" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-all text-sm">Search</button>
+                <button id="mobile-refresh-btn" class="px-3 py-2 bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 transition-all text-sm" aria-label="Refresh">🔄</button>
+            </div>
+        </div>
+
+        <div class="p-6 max-w-7xl mx-auto space-y-6">
+
+            <!-- SECTION: DASHBOARD (Default) -->
+            <div id="section-dashboard" class="space-y-6">
+
+                <div id="loading" class="text-center py-20">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-indigo-600"></div>
+                    <p class="mt-4 text-slate-500 font-medium">Loading dashboard data...</p>
+                </div>
+
+                <div id="dashboard-content" class="hidden space-y-6">
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow relative overflow-hidden group">
+                            <div class="absolute right-0 top-0 h-full w-1 bg-indigo-500"></div>
+                            <div class="text-sm font-semibold text-slate-500 mb-2 uppercase tracking-wide">Total Candidates</div>
+                            <div id="stat-candidates" class="text-4xl font-bold text-slate-900">0</div>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow relative overflow-hidden group">
+                            <div class="absolute right-0 top-0 h-full w-1 bg-emerald-500"></div>
+                            <div class="text-sm font-semibold text-slate-500 mb-2 uppercase tracking-wide">Completed Sessions</div>
+                            <div id="stat-sessions" class="text-4xl font-bold text-slate-900">0</div>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow relative overflow-hidden group">
+                            <div class="absolute right-0 top-0 h-full w-1 bg-violet-500"></div>
+                            <div class="text-sm font-semibold text-slate-500 mb-2 uppercase tracking-wide">Average Score</div>
+                            <div id="stat-avg-score" class="text-4xl font-bold text-slate-900">-</div>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow relative overflow-hidden group">
+                            <div class="absolute right-0 top-0 h-full w-1 bg-amber-500"></div>
+                            <div class="text-sm font-semibold text-slate-500 mb-2 uppercase tracking-wide">Active Today</div>
+                            <div id="stat-active" class="text-4xl font-bold text-slate-900">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="flex items-center gap-4 border-b border-gray-200 pb-1">
+                        <button id="tab-candidates" class="px-4 py-2 text-sm font-medium text-indigo-600 border-b-2 border-indigo-600 transition-colors">Candidates</button>
+                        <button id="tab-sessions" class="px-4 py-2 text-sm font-medium text-slate-500 hover:text-indigo-600 border-b-2 border-transparent hover:border-indigo-300 transition-colors">All Sessions</button>
+
+                        <div class="ml-auto flex items-center gap-2">
+                            <label for="course-select" class="text-xs font-medium text-slate-500">Course:</label>
+                            <div class="flex items-center gap-1">
+                                <select id="course-select" class="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-indigo-500 outline-none w-32" onchange="switchCourse(this.value)"></select>
+                                <button onclick="openCourseManager()" class="p-1 text-slate-400 hover:text-indigo-600 transition-colors" title="Manage Courses">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                </button>
+                            </div>
+                            <label for="dashboard-role-filter" class="text-xs font-medium text-slate-500 ml-2">View As:</label>
+                            <select id="dashboard-role-filter" class="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" onchange="loadDashboard()">
+                                <option value="candidate">Candidates</option>
+                                <option value="admin">Admins</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- View: Candidates List -->
+                    <div id="view-candidates">
+                        <div id="candidates-list" class="space-y-4"></div>
+                        <div id="pagination" class="mt-6 flex justify-center items-center gap-3 hidden">
+                            <button id="prev-page" class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-sm">Previous</button>
+                            <span id="page-info" class="text-slate-600 font-medium text-sm bg-slate-100 px-3 py-1 rounded-md">Page 1 of 1</span>
+                            <button id="next-page" class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-sm">Next</button>
+                        </div>
+                        <div id="no-data" class="hidden text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
+                            <div class="text-6xl mb-4">📊</div>
+                            <h3 class="text-xl font-bold text-slate-800 mb-2">No Candidate Data Yet</h3>
+                            <p class="text-slate-500 max-w-md mx-auto mb-6">Create candidate accounts and have them complete training sessions to see data here.</p>
+                        </div>
+                    </div>
+
+                    <!-- View: Advanced Search (Sessions) -->
+                    <div id="view-sessions" class="hidden">
+                        <!-- Filters -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                                    Advanced Filters
+                                </h3>
+                                <div class="flex items-center gap-2">
+                                    <select id="saved-views-dropdown" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm"></select>
+                                    <span id="saved-views-help" class="text-xs text-slate-500 ml-2 hidden">No saved views yet.</span>
+                                    <button id="save-view-btn" class="px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save View</button>
+                                    <button id="share-view-btn" class="px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg text-slate-700 hover:bg-gray-50">Share</button>
+                                    <button id="delete-view-btn" class="px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg text-slate-700 hover:bg-gray-50">Delete</button>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                                <div class="md:col-span-4">
+                                    <label for="filter-start-date" class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Date Range</label>
+                                    <div class="flex gap-2">
+                                        <label for="filter-start-date" class="sr-only">Start date</label>
+                                        <input type="date" id="filter-start-date" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <span class="self-center text-slate-400">-</span>
+                                        <label for="filter-end-date" class="sr-only">End date</label>
+                                        <input type="date" id="filter-end-date" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                                    </div>
+                                </div>
+                                <div class="md:col-span-4">
+                                    <label for="filter-min-score" class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Score Range</label>
+                                    <div class="flex gap-2">
+                                        <label for="filter-min-score" class="sr-only">Minimum score</label>
+                                        <input type="number" id="filter-min-score" placeholder="Min" min="0" max="10" step="0.1" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <span class="self-center text-slate-400">-</span>
+                                        <label for="filter-max-score" class="sr-only">Maximum score</label>
+                                        <input type="number" id="filter-max-score" placeholder="Max" min="0" max="10" step="0.1" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                                    </div>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label for="filter-role" class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Role</label>
+                                    <select id="filter-role" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <option value="">All Roles</option>
+                                        <option value="candidate">Candidate</option>
+                                        <option value="viewer">Viewer</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label for="filter-category" class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Category</label>
+                                    <select id="filter-category" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <option value="">All Categories</option>
+                                        <option value="Objection Handling">Objection Handling</option>
+                                        <option value="Needs Analysis">Needs Analysis</option>
+                                        <option value="Closing Techniques">Closing Techniques</option>
+                                        <option value="Product Knowledge">Product Knowledge</option>
+                                    </select>
+                                </div>
+                                <div class="md:col-span-12 flex flex-col md:flex-row gap-4 mt-2">
+                                    <div class="relative flex-1">
+                                        <label for="filter-search" class="sr-only">Search candidate name</label>
+                                        <input type="text" id="filter-search" placeholder="Search candidate name..." class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <span class="absolute left-3 top-2.5 text-slate-400">🔍</span>
+                                    </div>
+                                    <div class="flex gap-3">
+                                        <button id="filter-clear-btn" class="px-4 py-2.5 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium border border-transparent hover:border-slate-200">Clear</button>
+                                        <button id="filter-apply-btn" class="px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 text-sm shadow-md shadow-indigo-100">Apply Filters</button>
+                                    </div>
+                                </div>
+                                <div id="filters-errors" class="mt-2 text-sm text-red-600 hidden md:col-span-12"></div>
+                                <div id="active-filters" class="mt-2 flex flex-wrap gap-2 md:col-span-12"></div>
+                            </div>
+                        </div>
+
+                        <!-- Results Table -->
+                        <div class="mb-4 flex justify-between items-center">
+                            <div class="text-sm font-medium text-slate-500" id="selection-info"></div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="exportSessionsCSV()" class="px-4 py-2.5 bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 text-sm flex items-center gap-2"><span>📥</span> Export CSV</button>
+                                <button id="sessions-refresh-btn" class="px-4 py-2.5 bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 text-sm">🔄 Refresh</button>
+                                <button id="bulk-delete-btn" class="hidden px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 flex items-center gap-2" onclick="deleteSelectedSessions()"><span>🗑️</span> Delete</button>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-slate-50">
+                                        <tr>
+                                            <th class="px-6 py-4 w-10"><input type="checkbox" id="select-all-sessions" aria-label="Select all sessions" onchange="toggleAllSessions(this)" class="rounded border-gray-300 text-indigo-600"></th>
+                                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Candidate</th>
+                                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Category</th>
+                                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Date</th>
+                                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Score</th>
+                                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Notes</th>
+                                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Tags</th>
+                                            <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sessions-table-body" class="bg-white divide-y divide-gray-100 text-sm"></tbody>
+                                </table>
+                            </div>
+                            <div id="sessions-loading" class="hidden py-12 text-center"><div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-indigo-600"></div></div>
+                            <div id="sessions-empty" class="hidden py-12 text-center text-slate-500 bg-slate-50">No sessions found matching your filters.</div>
+                        </div>
+                        <div id="sessions-pagination" class="mt-6 flex justify-center items-center gap-3 hidden">
+                            <button id="sessions-prev-page" class="px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-sm">Previous</button>
+                            <span id="sessions-page-info" class="text-slate-600 font-medium text-sm bg-slate-100 px-3 py-1 rounded-md">Page 1 of 1</span>
+                            <button id="sessions-next-page" class="px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-sm">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: CONTENT LIBRARY -->
+            <div id="section-content" class="hidden space-y-6">
+
+                <!-- Stats / Sync -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                     <div class="flex items-center gap-4">
+                        <h2 class="text-lg font-bold text-slate-800">Knowledge Base Content</h2>
+                        <button id="sync-content-btn" class="px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors flex items-center gap-2">
+                            <span>🔄</span> Sync Content
+                        </button>
+                     </div>
+                     <div class="text-sm text-slate-500" id="rag-last-updated">Checking RAG Status...</div>
+                </div>
+
+                <!-- RAG Status -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                     <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wide mb-4">System Health</h3>
+                     <div id="rag-status-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div class="col-span-full text-center py-4 text-slate-400 text-sm">Loading coverage data...</div>
+                     </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- Upload Form (8 cols) -->
+                    <div class="lg:col-span-8 space-y-8">
+                        <div class="glass-card rounded-2xl shadow-sm p-8 bg-white">
+                            <div class="flex items-center gap-3 mb-8">
+                                <div class="p-3 bg-indigo-50 rounded-xl text-indigo-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                                </div>
+                                <div>
+                                    <h2 class="text-2xl font-bold text-slate-900">Upload Content</h2>
+                                    <p class="text-slate-500">Add new training materials to the knowledge base</p>
+                                </div>
+                            </div>
+
+                            <form id="upload-form" class="space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="space-y-2">
+                                        <label for="category" class="text-sm font-semibold text-slate-700">Module (Category)</label>
+                                        <div class="flex gap-2">
+                                            <div class="relative flex-1">
+                                                <select id="category" required class="w-full appearance-none pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                                    <option value="">Select Category...</option>
+                                                </select>
+                                                <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-500">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                                </div>
+                                            </div>
+                                            <button type="button" onclick="openCurrentCourseCategoryManager()" class="px-3 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-colors border border-indigo-100" title="Add New Category">
+                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <label for="video-name" class="text-sm font-semibold text-slate-700">Video Name</label>
+                                        <input type="text" id="video-name" required placeholder="e.g., Sales Script Mastery" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                    </div>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <label for="file-input" class="text-sm font-semibold text-slate-700">Transcript File (.txt)</label>
+                                    <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-200 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-all group">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <svg class="w-8 h-8 mb-3 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                                            <p class="mb-2 text-sm text-slate-500"><span class="font-semibold text-indigo-600">Click to upload</span> or drag and drop</p>
+                                            <p class="text-xs text-slate-400" id="file-name-display">TXT files only</p>
+                                        </div>
+                                        <input id="file-input" type="file" class="hidden" accept=".txt" required />
+                                    </label>
+                                </div>
+
+                                <button type="submit" id="upload-btn" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2">
+                                    <span>Upload to Knowledge Base</span>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                </button>
+                            </form>
+
+                            <div id="upload-status" class="mt-6 hidden">
+                                <div class="p-5 bg-slate-50 border border-slate-200 rounded-xl">
+                                    <div class="flex justify-between text-sm font-medium mb-2">
+                                        <span id="status-text" class="text-slate-700">Processing...</span>
+                                        <span class="text-indigo-600 animate-pulse">Please wait</span>
+                                    </div>
+                                    <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                                        <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width:0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="upload-result" class="mt-6 hidden"></div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Card (4 cols) -->
+                    <div class="lg:col-span-4 space-y-8">
+                        <div class="glass-card rounded-2xl shadow-sm p-6 bg-white">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="p-2 bg-blue-50 rounded-lg text-blue-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                                </div>
+                                <h2 class="text-lg font-bold text-slate-900">Content Stats</h2>
+                            </div>
+                            <div id="stats-loading" class="flex flex-col items-center justify-center py-8 text-slate-400">
+                                <div class="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 border-t-indigo-600 mb-3"></div>
+                                <span class="text-xs">Syncing data...</span>
+                            </div>
+                            <div id="stats-container" class="space-y-3 hidden max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: USER MANAGEMENT -->
+            <div id="section-users" class="hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Create User Card -->
+                    <div class="glass-card rounded-2xl shadow-sm p-6 bg-white">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                            </div>
+                            <h2 class="text-lg font-bold text-slate-900">Add New Candidate</h2>
+                        </div>
+
+                        <form id="create-user-form" class="space-y-4">
+                            <div class="space-y-1.5">
+                                <label for="new-username" class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Username</label>
+                                <input type="text" id="new-username" required placeholder="e.g. rahul.kumar" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                            </div>
+                            <div class="space-y-1.5">
+                                <label for="new-password" class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Password</label>
+                                <input type="password" id="new-password" required placeholder="••••••••" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                            </div>
+                            <div class="space-y-1.5">
+                                <label for="new-name" class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Full Name</label>
+                                <input type="text" id="new-name" required placeholder="Rahul Kumar" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                            </div>
+                            <div class="space-y-1.5">
+                                <label for="new-role" class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Role</label>
+                                <select id="new-role" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                                    <option value="candidate" selected>Candidate</option>
+                                    <option value="viewer">Viewer</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <button type="submit" id="create-user-btn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-lg shadow-emerald-200 transition-all text-sm">Create Account</button>
+                        </form>
+                        <div id="user-result" class="mt-4 hidden text-sm"></div>
+                    </div>
+
+                    <!-- Import Users -->
+                    <div class="glass-card rounded-2xl shadow-sm p-6 bg-white flex flex-col justify-center items-center text-center">
+                         <div class="p-4 bg-indigo-50 rounded-full text-indigo-600 mb-4">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                         </div>
+                         <h2 class="text-xl font-bold text-slate-900 mb-2">Bulk Import Users</h2>
+                         <p class="text-slate-500 mb-6 max-w-xs">Upload a CSV file to create multiple candidate accounts at once.</p>
+                         <button id="import-users-btn" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">
+                            Import from CSV
+                         </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: SETTINGS -->
+            <div id="section-settings" class="hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><span>⚙️</span> System Configuration</h3>
+                        <div class="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Changes affect new sessions immediately</div>
+                    </div>
+                    <div id="settings-loading" class="text-center py-12">
+                         <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-indigo-600"></div>
+                         <p class="mt-2 text-slate-500">Loading settings...</p>
+                    </div>
+                    <form id="settings-form" class="hidden">
+                        <div id="settings-container" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6"></div>
+                        <div class="mt-8 pt-6 border-t border-gray-100 flex justify-end items-center gap-3">
+                            <button type="button" onclick="loadSettings()" class="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-medium transition">Cancel</button>
+                            <button type="submit" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Import Users Modal -->
+    <div id="import-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+            <h2 class="text-2xl font-bold mb-2 text-slate-900">Import Users</h2>
+            <p class="text-slate-500 mb-6 text-sm">Upload a CSV file with columns: <code>username</code>, <code>password</code>, <code>name</code>, <code>role</code> (optional).</p>
+            <form id="import-form" class="space-y-6">
+                <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:bg-slate-50 hover:border-indigo-400 transition-colors cursor-pointer group" id="drop-zone">
+                    <input type="file" id="csv-file" accept=".csv" class="hidden">
+                    <label for="csv-file" class="cursor-pointer w-full h-full block">
+                        <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">📄</div>
+                        <span class="text-indigo-600 font-bold block mb-1">Click to upload CSV</span>
+                        <span class="text-slate-400 text-xs">or drag and drop here</span>
+                        <p id="file-name" class="text-sm text-slate-700 mt-4 font-medium bg-slate-100 rounded px-2 py-1 inline-block hidden"></p>
+                    </label>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" id="close-import" class="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-medium">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200">Import Users</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Session Detail Modal -->
+    <div id="session-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="gradient-bg text-white p-6 flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="bg-white/20 p-2 rounded-lg"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
+                    <h2 class="text-2xl font-bold tracking-tight">Session Report</h2>
+                </div>
+                <button id="close-modal" class="text-white/80 hover:text-white hover:bg-white/10 rounded-full p-2 transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <div class="p-4 md:p-8 overflow-y-auto grow custom-scrollbar">
+                <div id="modal-content"><div class="text-center py-20"><div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-indigo-600"></div><p class="mt-4 text-slate-500 font-medium">Loading report...</p></div></div>
+                <div class="mt-10 border-t border-gray-100 pt-8">
+                    <h3 class="text-lg font-bold mb-4 text-slate-800 flex items-center gap-2"><span>📝</span> Admin Notes</h3>
+                    <div class="relative group">
+                        <label for="session-notes" class="sr-only">Admin Notes</label>
+                        <textarea id="session-notes" rows="4" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-2 focus:ring-indigo-500 outline-none resize-none" placeholder="Add feedback or internal notes about this session..."></textarea>
+                        <div id="notes-status" class="absolute bottom-4 right-4 text-xs font-medium text-slate-400 transition-opacity"></div>
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <button id="save-notes-btn" class="px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-100 flex items-center gap-2">Save Notes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Manager Modal -->
+    <div id="course-manager-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] shadow-2xl flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white">
+                <h3 class="font-bold text-lg text-slate-800">Manage Courses</h3>
+                <button onclick="closeCourseManager()" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 bg-slate-50 space-y-6">
+                <!-- Create Course Form -->
+                <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+                    <h4 class="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wide">Create New Course</h4>
+                    <form id="create-course-form" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Course Name</label>
+                                <input type="text" id="new-course-name" placeholder="e.g. Phone Videography" required
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Slug (URL friendly)</label>
+                                <input type="text" id="new-course-slug" placeholder="e.g. phone-video" required
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Description</label>
+                            <input type="text" id="new-course-desc" placeholder="Short description..."
+                                class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="submit" id="create-course-btn" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200">
+                                Create Course
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Course List -->
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                    <div class="px-5 py-3 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                        <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Existing Courses</h4>
+                    </div>
+                    <div id="course-manager-list" class="divide-y divide-gray-100">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Manager Modal -->
+    <div id="category-manager-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] shadow-2xl flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white">
+                <div>
+                    <h3 class="font-bold text-lg text-slate-800">Manage Modules</h3>
+                    <p id="cat-manager-course-name" class="text-xs text-slate-500">For Course: ...</p>
+                </div>
+                <button onclick="closeCategoryManager()" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 bg-slate-50 space-y-6">
+                <!-- Add Category Form -->
+                <form id="add-category-form" class="flex gap-2">
+                    <input type="text" id="new-cat-name" placeholder="New Module Name" required
+                        class="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <button type="submit" id="add-cat-btn" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 whitespace-nowrap">
+                        Add Module
+                    </button>
+                </form>
+
+                <!-- Category List -->
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                    <div id="category-manager-list" class="divide-y divide-gray-100 max-h-[300px] overflow-y-auto">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="mobile-backdrop" class="hidden fixed inset-0 bg-slate-900/40 z-20"></div>
+
+    <script src="js/admin-dashboard.js"></script>
+</body>
+</html>

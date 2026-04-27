@@ -31,19 +31,26 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        switch (data.user.role) {
-          case 'admin':
-            window.location.href = '/admin/dashboard.html';
-            break;
-          case 'trainer':
-            window.location.href = '/trainer/dashboard.html';
-            break;
-          case 'student':
-            window.location.href = '/student/dashboard.html';
-            break;
-          default:
-            errorDiv.textContent = 'Unknown user role';
-            errorDiv.style.display = 'block';
+        // Store user data for Sales Trainer frontend compatibility
+        sessionStorage.setItem('ahl_user', JSON.stringify(data.user));
+
+        if (data.redirectUrl) {
+          window.location.href = data.redirectUrl;
+        } else {
+          switch (data.user.role) {
+            case 'admin':
+              window.location.href = '/admin/dashboard.html';
+              break;
+            case 'trainer':
+              window.location.href = '/trainer/dashboard.html';
+              break;
+            case 'student':
+              window.location.href = '/student/dashboard.html';
+              break;
+            default:
+              errorDiv.textContent = 'Unknown user role';
+              errorDiv.style.display = 'block';
+          }
         }
       } else {
         errorDiv.textContent = data.error || 'Invalid credentials';

@@ -112,6 +112,10 @@ app.use('/api/audio', audioRoutes);
 const learningToolsRoutes = require('./routes/learning-tools-routes');
 app.use('/api/tools', learningToolsRoutes);
 
+// Use sales trainer routes
+const salesTrainerRoutes = require('./routes/sales-trainer-routes');
+app.use('/api/training', salesTrainerRoutes);
+
 // Database connection
 const db = new sqlite3.Database('./lms_database.db');
 
@@ -230,7 +234,9 @@ db.serialize(() => {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     course_id INTEGER,
     title TEXT NOT NULL,
-    gumlet_url TEXT NOT NULL,
+    gumlet_url TEXT,
+    video_url TEXT,
+    video_type TEXT DEFAULT 'gumlet' CHECK(video_type IN ('gumlet', 'youtube')),
     sequence INTEGER NOT NULL,
     gumlet_asset_id TEXT,
     gumlet_collection_id TEXT,
@@ -411,8 +417,19 @@ app.post('/api/login', (req, res) => {
     req.session.userName = user.name;
     req.session.userCourseRole = user.course_role;
 
+    // Smart redirection based on role/course_role
+    let redirectUrl = '/student/dashboard.html';
+    if (user.role === 'admin') {
+      redirectUrl = '/admin/dashboard.html';
+    } else if (user.role === 'trainer') {
+      redirectUrl = '/trainer/dashboard.html';
+    } else if (user.course_role === 'Sales') {
+      redirectUrl = '/sales-trainer/trainer.html';
+    }
+
     res.json({
       success: true,
+      redirectUrl,
       user: {
         id: user.id,
         name: user.name,
@@ -1032,14 +1049,16 @@ app.delete('/api/trainer-assignments/:trainerId/:courseId', requireAuth, require
 // Add video lesson to course (admin only)
 app.post('/api/videos', requireAuth, requireRole(['admin']), async (req, res) => {
   try {
-    const { course_id, title, gumlet_url, sequence, chapter_id } = req.body;
+    const { course_id, title, gumlet_url, video_url, video_type = 'gumlet', sequence, chapter_id } = req.body;
 
     const courseIdNum = parseInt(course_id);
     const chapterIdNum = parseInt(chapter_id);
     let sequenceNum = sequence !== undefined ? parseInt(sequence) : NaN;
 
-    if (!title || !gumlet_url || !courseIdNum || !chapterIdNum) {
-      return res.status(400).json({ error: 'Course, chapter, title, and Gumlet URL are required' });
+    const finalVideoUrl = video_url || gumlet_url;
+
+    if (!title || !finalVideoUrl || !courseIdNum || !chapterIdNum) {
+      return res.status(400).json({ error: 'Course, chapter, title, and Video URL are required' });
     }
 
     const chapter = await dbGetAsync(
@@ -1060,8 +1079,8 @@ app.post('/api/videos', requireAuth, requireRole(['admin']), async (req, res) =>
     }
 
     const insertResult = await dbRunAsync(
-      'INSERT INTO videos (course_id, title, gumlet_url, sequence, level_id, chapter_id) VALUES (?, ?, ?, ?, ?, ?)',
-      [courseIdNum, title, gumlet_url, sequenceNum, chapter.level_id, chapter.id]
+      'INSERT INTO videos (course_id, title, gumlet_url, video_url, video_type, sequence, level_id, chapter_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [courseIdNum, title, gumlet_url || null, finalVideoUrl, video_type, sequenceNum, chapter.level_id, chapter.id]
     );
 
     res.json({
