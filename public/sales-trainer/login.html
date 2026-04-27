@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHL Sales Trainer - Login</title>
+    <link rel="icon" href="/js/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/js/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/js/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/js/apple-touch-icon.png">
+    <link href="/js/css/output.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+            <div class="gradient-bg text-white p-8 text-center">
+                <div class="mb-4 text-5xl">🎓</div>
+                <h1 class="text-3xl font-bold mb-2 tracking-tight">AHL Sales Trainer</h1>
+                <p class="text-indigo-100 font-medium">Professional Sales Training System</p>
+            </div>
+
+            <div class="p-8">
+                <div id="error-message" class="hidden mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm" role="alert" aria-live="polite"></div>
+
+                <form id="login-form" class="space-y-5">
+                    <div>
+                        <label for="username" class="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+                        <input
+                            type="text"
+                            id="username"
+                            required
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:border-transparent transition-all outline-none"
+                            placeholder="Enter your username"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                        <input
+                            type="password"
+                            id="password"
+                            required
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:border-transparent transition-all outline-none"
+                            placeholder="Enter your password"
+                        >
+                    </div>
+
+                    <button
+                        type="submit"
+                        id="login-btn"
+                        class="w-full py-3.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-200"
+                    >
+                        Sign In
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <p class="text-center text-gray-400 text-sm mt-6">&copy; 2026 AHL Sales Trainer. All rights reserved.</p>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+    <script>
+        // Toast System
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            let bgClass = 'bg-gray-800';
+            if (type === 'success') bgClass = 'bg-green-600';
+            if (type === 'error') bgClass = 'bg-red-600';
+            if (type === 'warning') bgClass = 'bg-yellow-600';
+
+            toast.className = `${bgClass} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-y-full opacity-0 flex items-center gap-2`;
+            toast.innerHTML = `
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">&times;</button>
+            `;
+
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => toast.classList.remove('translate-y-full', 'opacity-0'));
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        const API_BASE = '';
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const loginBtn = document.getElementById('login-btn');
+            const errorDiv = document.getElementById('error-message');
+
+            // Clear previous errors
+            errorDiv.classList.add('hidden');
+            errorDiv.textContent = '';
+
+            // Loading state
+            const originalText = loginBtn.innerHTML;
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<div class="inline-block animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div> Logging in...';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Store user info
+                    localStorage.setItem('ahl_user', JSON.stringify(data.user));
+                    showToast('Login successful! Redirecting...', 'success');
+
+                    setTimeout(() => {
+                        // Redirect based on role
+                        if (data.user.role === 'admin' || data.user.role === 'viewer') {
+                            window.location.href = 'admin-dashboard.html';
+                        } else {
+                            window.location.href = 'trainer.html';
+                        }
+                    }, 1000);
+                } else {
+                    const errorMsg = data.error === 'invalid_credentials'
+                        ? 'Invalid username or password'
+                        : 'Login failed. Please try again.';
+                    errorDiv.textContent = errorMsg;
+                    errorDiv.classList.remove('hidden');
+                    showToast(errorMsg, 'error');
+
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                const errorMsg = 'Network error. Please check if the server is running.';
+                errorDiv.textContent = errorMsg;
+                errorDiv.classList.remove('hidden');
+                showToast(errorMsg, 'error');
+
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = originalText;
+            }
+        });
+    </script>
+</body>
+</html>

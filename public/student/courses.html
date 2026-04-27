@@ -535,16 +535,31 @@
             lastPlayedVideoId = videoId; // Store for test functionality
             videoStartTime = Date.now();
 
-            // Extract Gumlet video ID
-            const gumletId = LMSUtils.extractGumletId(video.gumlet_url);
-            if (!gumletId) {
-                LMSUtils.showNotification('Invalid video URL', 'error');
-                return;
+            const videoPlayer = document.getElementById('videoPlayer');
+
+            if (video.video_type === 'youtube' || video.video_url?.includes('youtube.com') || video.video_url?.includes('youtu.be')) {
+                // Handle YouTube
+                let youtubeId = '';
+                if (video.video_url.includes('v=')) {
+                    youtubeId = video.video_url.split('v=')[1].split('&')[0];
+                } else if (video.video_url.includes('youtu.be/')) {
+                    youtubeId = video.video_url.split('youtu.be/')[1].split('?')[0];
+                } else if (video.video_url.includes('embed/')) {
+                    youtubeId = video.video_url.split('embed/')[1].split('?')[0];
+                }
+                videoPlayer.src = `https://www.youtube.com/embed/${youtubeId}`;
+            } else {
+                // Extract Gumlet video ID
+                const gumletId = LMSUtils.extractGumletId(video.video_url || video.gumlet_url);
+                if (!gumletId) {
+                    LMSUtils.showNotification('Invalid video URL', 'error');
+                    return;
+                }
+                videoPlayer.src = `https://play.gumlet.io/embed/${gumletId}`;
             }
 
             // Update video player
             document.getElementById('currentVideoTitle').textContent = `${video.sequence}. ${video.title}`;
-            document.getElementById('videoPlayer').src = `https://play.gumlet.io/embed/${gumletId}`;
             document.getElementById('videoDescription').textContent = `Video ${video.sequence} of ${courseVideos.length}`;
 
             // Show video player section
